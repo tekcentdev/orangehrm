@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'HKLIN01 || HKLIN02 || HKLIN03 || HKLIN04' }
+    agent { label 'HKLIN03' }
 
     environment {
         PHP_VERSION = '8.3'
