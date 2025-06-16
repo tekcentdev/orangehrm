@@ -33,8 +33,12 @@ pipeline {
             steps {
                 dir('src/client') {
                     echo "Installing and building frontend using Yarn"
-                    sh '''
-                        export PATH="$PATH:/usr/local/bin"
+                    sh '''                       
+                        export NVM_DIR="$HOME/.nvm"
+                        [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                        nvm install 18
+                        nvm use 18
+                        
                         yarn install
                         yarn build
                     '''
