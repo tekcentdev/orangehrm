@@ -5,6 +5,13 @@ pipeline {
         PHP_VERSION = '8.3'
     }
 
+    environment {
+        DEPLOY_USER = 'deployer'
+        DEPLOY_HOST = '10.88.1.39'
+        DEPLOY_PATH = '/var/www/html/orangehrm'
+        SSH_KEY = '/home/administrator/.ssh/id_rsa'
+    }
+
     stages {       
 
         stage('Checkout Code') {
@@ -44,6 +51,31 @@ pipeline {
                         yarn build
                     '''
                 }
+            }
+        }
+
+        stage('Determine Environment') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME ==~ /^dev\/.*/ || env.BRANCH_NAME ==~ /^feature\/.*/) {
+                        env.DEPLOY_PATH = '/var/www/html/orangehrm/test'
+                    } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME ==~ /^release\/.*/) {
+                        env.DEPLOY_PATH = '/var/www/html/orangehrm/prod'
+                    } else {
+                        error("Branch '${env.BRANCH_NAME}' is not allowed to deploy.")
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo "Deploying branch ${env.BRANCH_NAME} to ${env.DEPLOY_PATH}"
+                sh """
+                rsync -avz -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
+                ./web/ \
+                $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/web
+                """
             }
         }
     }
