@@ -36,9 +36,10 @@ pipeline {
                     sh '''                       
                         export NVM_DIR="$HOME/.nvm"
                         [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
-                        nvm install 18
-                        nvm use 18
-                        
+                        nvm install 18.20.8
+                        nvm use 18.20.8
+
+                        export PATH="/home/administrator/.nvm/versions/node/v18.20.2/bin:$PATH"
                         yarn install
                         yarn build
                     '''
