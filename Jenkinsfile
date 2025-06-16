@@ -52,12 +52,15 @@ pipeline {
             steps {
                 script {
                     if (env.BRANCH_NAME ==~ /^dev\/.*/ || env.BRANCH_NAME ==~ /^feature\/.*/) {
-                        env.DEPLOY_PATH = '/var/www/html/orangehrm/test'
+                        deployPath = '/var/www/html/orangehrm/test'
                     } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME ==~ /^release\/.*/) {
-                        env.DEPLOY_PATH = '/var/www/html/orangehrm/prod'
+                        deployPath = '/var/www/html/orangehrm/prod'
                     } else {
                         error("Branch '${env.BRANCH_NAME}' is not allowed to deploy.")
                     }
+
+                    // Save to file so shell step can use it
+                    writeFile file: 'deploy.path', text: deployPath
                 }
             }
         }
@@ -70,6 +73,8 @@ pipeline {
                     sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
                 ]) {
                     sh """
+                    DEPLOY_PATH=\$(cat deploy.path)
+
                     echo "Deploying to \$DEPLOY_USER@\${DEPLOY_HOST}:\$DEPLOY_PATH"
                     rsync -avz -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" \
                     --exclude='.git' --exclude='tests' \
@@ -78,6 +83,6 @@ pipeline {
                     """
                 }
             }
-        }        
+        }
     }
 }
