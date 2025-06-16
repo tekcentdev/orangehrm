@@ -34,6 +34,7 @@ pipeline {
                 dir('src/client') {
                     echo "Installing and building frontend using Yarn"
                     sh '''
+                        export PATH="$PATH:/usr/local/bin"
                         yarn install
                         yarn build
                     '''
