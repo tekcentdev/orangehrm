@@ -38,6 +38,50 @@
           <oxd-text tag="p">Password : admin123</oxd-text>
         </oxd-sheet>
       </div>
+      <div style="margin-bottom: 24px; text-align: center">
+        <a href="/web/sso-login.php" style="text-decoration: none">
+          <button
+            type="button"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 12px;
+              padding: 10px 20px;
+              font-size: 16px;
+              font-family: 'Segoe UI', sans-serif;
+              font-weight: 600;
+              color: #2f2f2f;
+              background-color: #ffffff;
+              border: 1px solid #d6d6d6;
+              border-radius: 6px;
+              cursor: pointer;
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+              transition: background-color 0.2s ease;
+            "
+          >
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg"
+              alt="Microsoft logo"
+              style="height: 20px"
+            />
+            <span>Sign in with Microsoft</span>
+          </button>
+        </a>
+      </div>
+
+      <!-- Divider -->
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          text-align: center;
+          margin: 16px 0;
+        "
+      >
+        <hr style="flex: 1; border: none; border-top: 1px solid #ccc" />
+        <span style="padding: 0 12px; color: #888; font-weight: 500">or</span>
+        <hr style="flex: 1; border: none; border-top: 1px solid #ccc" />
+      </div>
       <oxd-form
         ref="loginForm"
         method="post"
