@@ -3,13 +3,7 @@ pipeline {
 
     environment {
         PHP_VERSION = '8.3'
-    }
-
-    environment {
-        DEPLOY_USER = 'deployer'
-        DEPLOY_HOST = '10.88.1.39'
-        DEPLOY_PATH = '/var/www/html/orangehrm'
-        SSH_KEY = '/home/administrator/.ssh/id_rsa'
+        DEPLOY_PATH = '/var/www/html/orangehrm' // will be overridden dynamically
     }
 
     stages {       
@@ -36,7 +30,7 @@ pipeline {
             }
         }
 
-        stage('Build Frontend') {
+        stage('Build') {
             steps {
                 dir('src/client') {
                     echo "Installing and building frontend using Yarn"
@@ -70,13 +64,19 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo "Deploying branch ${env.BRANCH_NAME} to ${env.DEPLOY_PATH}"
-                sh """
-                rsync -avz -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
-                ./web/ \
-                $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/web
-                """
+                withCredentials([
+                    string(credentialsId: 'orangehrm-deploy-user', variable: 'DEPLOY_USER'),
+                    string(credentialsId: 'orangehrm-deploy-host', variable: 'DEPLOY_HOST'),
+                    sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
+                ]) {
+                    sh """
+                    echo "Deploying to \$DEPLOY_USER@\${DEPLOY_HOST}"
+                    rsync -avz -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" \
+                    ./web/ \
+                    \$DEPLOY_USER@\${DEPLOY_HOST}:\$DEPLOY_PATH/web
+                    """
+                }
             }
-        }
+        }        
     }
 }
