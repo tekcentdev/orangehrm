@@ -46,11 +46,5 @@ pipeline {
                 }
             }
         }
-
-        stage('Publish Artifacts') {
-            steps {
-                publishArtifacts()
-            }
-        }
     }
 }
