@@ -70,10 +70,11 @@ pipeline {
                     sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
                 ]) {
                     sh """
-                    echo "Deploying to \$DEPLOY_USER@\${DEPLOY_HOST}"
+                    echo "Deploying to \$DEPLOY_USER@\${DEPLOY_HOST}:\$DEPLOY_PATH"
                     rsync -avz -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" \
-                    ./web/ \
-                    \$DEPLOY_USER@\${DEPLOY_HOST}:\$DEPLOY_PATH/web
+                    --exclude='.git' --exclude='tests' \
+                    ./ \
+                    \$DEPLOY_USER@\${DEPLOY_HOST}:\$DEPLOY_PATH
                     """
                 }
             }
