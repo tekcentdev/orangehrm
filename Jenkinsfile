@@ -33,17 +33,37 @@ pipeline {
         stage('Build') {
             steps {
                 dir('src/client') {
-                    echo "Installing and building frontend using Yarn"
-                    sh '''                       
-                        export NVM_DIR="$HOME/.nvm"
-                        [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
-                        nvm install 18.20.8
-                        nvm use 18.20.8
+                    script {
+                        // Check if frontend files changed
+                        def changed = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
+                        def frontendChanged = changed.contains('src/client') || changed.contains('package.json')
 
-                        export PATH="/home/administrator/.nvm/versions/node/v18.20.2/bin:$PATH"
-                        yarn install
-                        yarn build
-                    '''
+                        if (frontendChanged) {
+                            echo 'Frontend changes detected – proceeding with build.'
+                            
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                                
+                                # Only install if not already present
+                                nvm install 18.20.8 || true
+                                nvm use 18.20.8
+
+                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+
+                                # Use local cache for Yarn
+                                yarn config set cache-folder .yarn-cache
+
+                                echo "Installing dependencies with cache..."
+                                yarn install --prefer-offline --frozen-lockfile
+
+                                echo "Building frontend..."
+                                yarn build
+                            '''
+                        } else {
+                            echo 'No frontend changes — skipping build step.'
+                        }
+                    }
                 }
             }
         }
