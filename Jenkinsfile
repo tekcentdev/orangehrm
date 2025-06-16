@@ -96,7 +96,7 @@ pipeline {
                     DEPLOY_PATH=\$(cat deploy.path)
 
                     echo "Deploying to \$DEPLOY_USER@\${DEPLOY_HOST}:\$DEPLOY_PATH"
-                    rsync -avz -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" \
+                    rsync -avz --no-times -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" \
                     --exclude='.git' --exclude='tests' \
                     ./ \
                     \$DEPLOY_USER@\${DEPLOY_HOST}:\$DEPLOY_PATH
