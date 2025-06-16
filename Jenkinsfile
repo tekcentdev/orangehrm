@@ -5,12 +5,7 @@ pipeline {
         PHP_VERSION = '8.3'
     }
 
-    stages {
-        stage('Verifying') {
-            steps {
-                compareGitBranch()
-            }
-        }
+    stages {       
 
         stage('Checkout Code') {
             steps {
