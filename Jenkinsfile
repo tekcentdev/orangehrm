@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PHP_VERSION = '8.3'
-        DEPLOY_PATH = '/var/www/html/orangehrm' // Default, overridden later
+        DEPLOY_PATH = '/var/www/html/orangehrm' // Default path, overridden by branch
     }
 
     stages {
@@ -16,7 +16,7 @@ pipeline {
         stage('Install PHP Dependencies') {
             steps {
                 dir('src') {
-                    echo "📦 Installing PHP dependencies with Composer"
+                    echo "Installing PHP dependencies using Composer"
                     sh '''
                         php -v
                         if [ -f composer.json ]; then
@@ -34,7 +34,7 @@ pipeline {
                 stage('Build Frontend') {
                     steps {
                         dir('src/client') {
-                            echo '⚙️ Building frontend...'
+                            echo '⚙️ Building frontend (src/client)...'
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
                                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -50,7 +50,10 @@ pipeline {
                                     echo "✅ Yarn already installed: $(yarn -v)"
                                 fi
 
-                                yarn install --prefer-offline --frozen-lockfile
+                                echo "📦 Installing dependencies with Yarn 4"
+                                yarn install --immutable --immutable-cache
+
+                                echo "🏗️ Building frontend..."
                                 yarn build
 
                                 echo "📁 Build output:"
@@ -59,11 +62,10 @@ pipeline {
                         }
                     }
                 }
-
                 stage('Build Installer') {
                     steps {
                         dir('installer/client') {
-                            echo '⚙️ Building installer...'
+                            echo '⚙️ Building installer (installer/client)...'
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
                                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -79,7 +81,10 @@ pipeline {
                                     echo "✅ Yarn already installed: $(yarn -v)"
                                 fi
 
-                                yarn install --prefer-offline --frozen-lockfile
+                                echo "📦 Installing dependencies with Yarn 4"
+                                yarn install --immutable --immutable-cache
+
+                                echo "🏗️ Building installer..."
                                 yarn build
 
                                 echo "📁 Build output:"
