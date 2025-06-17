@@ -51,7 +51,7 @@ pipeline {
                                 fi
 
                                 echo "📦 Installing dependencies with Yarn 4"
-                                yarn install --immutable --immutable-cache
+                                yarn install
 
                                 echo "🏗️ Building frontend..."
                                 yarn build
@@ -82,7 +82,7 @@ pipeline {
                                 fi
 
                                 echo "📦 Installing dependencies with Yarn 4"
-                                yarn install --immutable --immutable-cache
+                                yarn install
 
                                 echo "🏗️ Building installer..."
                                 yarn build
