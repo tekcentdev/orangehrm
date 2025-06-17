@@ -37,13 +37,14 @@ pipeline {
 
                     def setupNodeShell = '''
                         setup_node() {
-                            export NVM_DIR="$HOME/.nvm"
-                            [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                            export NVM_DIR="\\$HOME/.nvm"
+                            [ -s "\\$NVM_DIR/nvm.sh" ] && \\. "\\$NVM_DIR/nvm.sh"
                             nvm install 18.20.8 || true
                             nvm use 18.20.8
-                            export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+                            export PATH="\\$HOME/.nvm/versions/node/v18.20.8/bin:\\$PATH"
                         }
                     '''
+
 
                     if (changed.contains('src/client') || changed.contains('package.json')) {
                         dir('src/client') {
