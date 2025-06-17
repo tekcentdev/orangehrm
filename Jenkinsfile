@@ -52,8 +52,7 @@ pipeline {
                                 which yarn || echo "❌ yarn not found"
                                 yarn -v || true
 
-                                echo "📦 Installing dependencies with cache"
-                                yarn config set cache-folder .yarn-cache
+                                echo "📦 Installing dependencies with cache"                                
                                 yarn install --prefer-offline --frozen-lockfile
 
                                 echo "🏗️ Building frontend..."
@@ -86,8 +85,7 @@ pipeline {
                                 which yarn || echo "❌ yarn not found"
                                 yarn -v || true
 
-                                echo "📦 Installing dependencies with cache"
-                                yarn config set cache-folder .yarn-cache
+                                echo "📦 Installing dependencies with cache"                                
                                 yarn install --prefer-offline --frozen-lockfile
 
                                 echo "🏗️ Building installer..."
