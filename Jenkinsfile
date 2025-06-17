@@ -31,42 +31,56 @@ pipeline {
         }
 
         stage('Build') {
-            steps {
-                script {
-                    def setupNodeShell = '''
+    steps {
+        script {
+            def changed = sh(script: "git show --pretty='' --name-only", returnStdout: true).trim()
+
+            def buildClient = { dirPath, label ->
+                dir(dirPath) {
+                    echo "${label} changes detected – proceeding with build."
+
+                    sh '''
+                        echo "🔧 Setting up Node environment"
                         export NVM_DIR="$HOME/.nvm"
-                        [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
                         nvm install 18.20.8 || true
                         nvm use 18.20.8
                         export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+
+                        echo "🔍 Verifying tools"
+                        which node || echo "❌ node not found"
+                        node -v || true
+                        which yarn || echo "❌ yarn not found"
+                        yarn -v || true
+
+                        echo "📦 Installing dependencies with cache"
+                        yarn config set cache-folder .yarn-cache
+                        yarn install --prefer-offline --frozen-lockfile
+
+                        echo "🏗️ Building frontend..."
+                        yarn build
+
+                        echo "📁 Build output:"
+                        ls -lh dist || echo "❌ dist folder not created"
                     '''
-
-                    dir('src/client') {
-                        echo 'Building frontend (src/client)...'
-                        sh """
-                            ${setupNodeShell}
-                            yarn config set cache-folder .yarn-cache
-                            yarn install --prefer-offline --frozen-lockfile
-                            yarn build
-                            echo "Contents of dist (src/client):"
-                            ls -lh dist || echo "❌ dist/ not created"
-                        """
-                    }
-
-                    dir('installer/client') {
-                        echo 'Building installer (installer/client)...'
-                        sh """
-                            ${setupNodeShell}
-                            yarn config set cache-folder .yarn-cache
-                            yarn install --prefer-offline --frozen-lockfile
-                            yarn build
-                            echo "Contents of dist (installer/client):"
-                            ls -lh dist || echo "❌ dist/ not created"
-                        """
-                    }
                 }
             }
+
+            if (changed.contains('src/client') || changed.contains('package.json')) {
+                buildClient('src/client', 'Frontend')
+            } else {
+                echo 'No frontend changes — skipping build step.'
+            }
+
+            if (changed.contains('installer/client') || changed.contains('package.json')) {
+                buildClient('installer/client', 'Installer')
+            } else {
+                echo 'No installer changes — skipping build step.'
+            }
         }
+    }
+}
+
 
         stage('Determine Environment') {
             steps {
