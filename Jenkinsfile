@@ -3,10 +3,10 @@ pipeline {
 
     environment {
         PHP_VERSION = '8.3'
-        DEPLOY_PATH = '/var/www/html/orangehrm' // will be overridden dynamically
+        DEPLOY_PATH = '/var/www/html/orangehrm' // default; overridden later
     }
 
-    stages {       
+    stages {
 
         stage('Checkout Code') {
             steps {
@@ -35,29 +35,22 @@ pipeline {
                 script {
                     def changed = sh(script: "git show --pretty='' --name-only", returnStdout: true).trim()
 
-                    def setupNodeShell = '''
-                        setup_node() {
-                            export NVM_DIR="\\$HOME/.nvm"
-                            [ -s "\\$NVM_DIR/nvm.sh" ] && \\. "\\$NVM_DIR/nvm.sh"
-                            nvm install 18.20.8 || true
-                            nvm use 18.20.8
-                            export PATH="\\$HOME/.nvm/versions/node/v18.20.8/bin:\\$PATH"
-                        }
-                    '''
-
-
                     if (changed.contains('src/client') || changed.contains('package.json')) {
                         dir('src/client') {
                             echo 'Frontend changes detected – proceeding with build.'
-                            sh """
-                                ${setupNodeShell}
-                                setup_node
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                                nvm install 18.20.8 || true
+                                nvm use 18.20.8
+                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+
                                 yarn config set cache-folder .yarn-cache
                                 yarn install --prefer-offline --frozen-lockfile
                                 echo "Working dir: $(pwd)"
                                 yarn build
                                 ls -lh dist || echo "❌ src/client/dist/ not created"
-                            """
+                            '''
                         }
                     } else {
                         echo 'No frontend changes — skipping build step.'
@@ -66,15 +59,19 @@ pipeline {
                     if (changed.contains('installer/client') || changed.contains('package.json')) {
                         dir('installer/client') {
                             echo 'Installer changes detected – proceeding with build.'
-                            sh """
-                                ${setupNodeShell}
-                                setup_node
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                                nvm install 18.20.8 || true
+                                nvm use 18.20.8
+                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+
                                 yarn config set cache-folder .yarn-cache
                                 yarn install --prefer-offline --frozen-lockfile
                                 echo "Working dir: $(pwd)"
                                 yarn build
-                                ls -lh dist || echo "❌ /installer/client/dist/ not created"
-                            """
+                                ls -lh dist || echo "❌ installer/client/dist/ not created"
+                            '''
                         }
                     } else {
                         echo 'No installer changes — skipping build step.'
@@ -94,7 +91,6 @@ pipeline {
                         error("Branch '${env.BRANCH_NAME}' is not allowed to deploy.")
                     }
 
-                    // Save to file so shell step can use it
                     writeFile file: 'deploy.path', text: deployPath
                 }
             }
@@ -107,15 +103,14 @@ pipeline {
                     string(credentialsId: 'orangehrm-deploy-host', variable: 'DEPLOY_HOST'),
                     sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
                 ]) {
-                    sh """
-                    DEPLOY_PATH=\$(cat deploy.path)
-
-                    echo "Deploying to \$DEPLOY_USER@\${DEPLOY_HOST}:\$DEPLOY_PATH"
-                    rsync -avz --no-times --no-perms -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" \
+                    sh '''
+                    DEPLOY_PATH=$(cat deploy.path)
+                    echo "Deploying to $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH"
+                    rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
                     --exclude='.git' --exclude='tests' \
                     ./ \
-                    \$DEPLOY_USER@\${DEPLOY_HOST}:\$DEPLOY_PATH
-                    """
+                    $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+                    '''
                 }
             }
         }
