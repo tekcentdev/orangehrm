@@ -33,7 +33,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    def changed = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
+                    def changed = sh(script: "git show --pretty='' --name-only", returnStdout: true).trim()
 
                     def setupNodeShell = '''
                         setup_node() {
@@ -53,6 +53,7 @@ pipeline {
                                 setup_node
                                 yarn config set cache-folder .yarn-cache
                                 yarn install --prefer-offline --frozen-lockfile
+                                echo "Working dir: $(pwd)"
                                 yarn build
                                 ls -lh dist || echo "❌ src/client/dist/ not created"
                             """
@@ -69,6 +70,7 @@ pipeline {
                                 setup_node
                                 yarn config set cache-folder .yarn-cache
                                 yarn install --prefer-offline --frozen-lockfile
+                                echo "Working dir: $(pwd)"
                                 yarn build
                                 ls -lh dist || echo "❌ /installer/client/dist/ not created"
                             """
