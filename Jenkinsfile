@@ -3,11 +3,10 @@ pipeline {
 
     environment {
         PHP_VERSION = '8.3'
-        DEPLOY_PATH = '/var/www/html/orangehrm' // Default path
+        DEPLOY_PATH = '/var/www/html/orangehrm' // Default, overridden later
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
                 checkout scm
@@ -17,7 +16,7 @@ pipeline {
         stage('Install PHP Dependencies') {
             steps {
                 dir('src') {
-                    echo "Installing PHP dependencies using Composer"
+                    echo "📦 Installing PHP dependencies with Composer"
                     sh '''
                         php -v
                         if [ -f composer.json ]; then
@@ -35,7 +34,7 @@ pipeline {
                 stage('Build Frontend') {
                     steps {
                         dir('src/client') {
-                            echo '⚙️ Building frontend (src/client)...'
+                            echo '⚙️ Building frontend...'
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
                                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -43,19 +42,15 @@ pipeline {
                                 nvm use 18.20.8
                                 export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
 
-                                echo "Installing Yarn globally"
-                                npm install -g yarn
+                                echo "🔧 Checking for Yarn..."
+                                if ! command -v yarn >/dev/null 2>&1; then
+                                    echo "🔧 Yarn not found. Installing..."
+                                    npm install -g yarn
+                                else
+                                    echo "✅ Yarn already installed: $(yarn -v)"
+                                fi
 
-                                echo "🔍 Verifying tools"
-                                which node || echo "❌ node not found"
-                                node -v || true
-                                which yarn || echo "❌ yarn not found"
-                                yarn -v || true
-
-                                echo "📦 Installing dependencies with cache"                                
                                 yarn install --prefer-offline --frozen-lockfile
-
-                                echo "🏗️ Building frontend..."
                                 yarn build
 
                                 echo "📁 Build output:"
@@ -68,7 +63,7 @@ pipeline {
                 stage('Build Installer') {
                     steps {
                         dir('installer/client') {
-                            echo '⚙️ Building installer (installer/client)...'
+                            echo '⚙️ Building installer...'
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
                                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -76,19 +71,15 @@ pipeline {
                                 nvm use 18.20.8
                                 export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
 
-                                echo "Installing Yarn globally"
-                                npm install -g yarn
+                                echo "🔧 Checking for Yarn..."
+                                if ! command -v yarn >/dev/null 2>&1; then
+                                    echo "🔧 Yarn not found. Installing..."
+                                    npm install -g yarn
+                                else
+                                    echo "✅ Yarn already installed: $(yarn -v)"
+                                fi
 
-                                echo "🔍 Verifying tools"
-                                which node || echo "❌ node not found"
-                                node -v || true
-                                which yarn || echo "❌ yarn not found"
-                                yarn -v || true
-
-                                echo "📦 Installing dependencies with cache"                                
                                 yarn install --prefer-offline --frozen-lockfile
-
-                                echo "🏗️ Building installer..."
                                 yarn build
 
                                 echo "📁 Build output:"
