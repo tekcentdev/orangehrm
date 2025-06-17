@@ -30,61 +30,68 @@ pipeline {
         }
 
         stage('Build Frontend & Installer') {
-            steps {
-                script {
-                    dir('src/client') {
-                        echo '⚙️ Building frontend (src/client)...'
-                        sh '''
-                            echo "🔧 Setting up Node environment"
-                            export NVM_DIR="$HOME/.nvm"
-                            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                            nvm install 18.20.8 || true
-                            nvm use 18.20.8
-                            export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+            parallel {
+                stage('Build Frontend') {
+                    steps {
+                        dir('src/client') {
+                            echo '⚙️ Building frontend (src/client)...'
+                            sh '''
+                                echo "🔧 Setting up Node environment"
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                                nvm install 18.20.8 || true
+                                nvm use 18.20.8
+                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
 
-                            echo "🔍 Verifying tools"
-                            which node || echo "❌ node not found"
-                            node -v || true
-                            which yarn || echo "❌ yarn not found"
-                            yarn -v || true
+                                echo "🔍 Verifying tools"
+                                which node || echo "❌ node not found"
+                                node -v || true
+                                which yarn || echo "❌ yarn not found"
+                                yarn -v || true
 
-                            echo "📦 Installing dependencies with cache"
-                            yarn config set cache-folder .yarn-cache
-                            yarn install --prefer-offline --frozen-lockfile
+                                echo "📦 Installing dependencies with cache"
+                                yarn config set cache-folder .yarn-cache
+                                yarn install --prefer-offline --frozen-lockfile
 
-                            echo "🏗️ Building frontend..."
-                            yarn build
+                                echo "🏗️ Building frontend..."
+                                yarn build
 
-                            echo "📁 Build output:"
-                            ls -lh dist || echo "❌ dist folder not created"
-                        '''
+                                echo "📁 Build output:"
+                                ls -lh dist || echo "❌ dist folder not created"
+                            '''
+                        }
                     }
-                    dir('installer/client') {
-                        echo '⚙️ Building installer (installer/client)...'
-                        sh '''
-                            echo "🔧 Setting up Node environment"
-                            export NVM_DIR="$HOME/.nvm"
-                            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                            nvm install 18.20.8 || true
-                            nvm use 18.20.8
-                            export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+                }
 
-                            echo "🔍 Verifying tools"
-                            which node || echo "❌ node not found"
-                            node -v || true
-                            which yarn || echo "❌ yarn not found"
-                            yarn -v || true
+                stage('Build Installer') {
+                    steps {
+                        dir('installer/client') {
+                            echo '⚙️ Building installer (installer/client)...'
+                            sh '''
+                                echo "🔧 Setting up Node environment"
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                                nvm install 18.20.8 || true
+                                nvm use 18.20.8
+                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
 
-                            echo "📦 Installing dependencies with cache"
-                            yarn config set cache-folder .yarn-cache
-                            yarn install --prefer-offline --frozen-lockfile
+                                echo "🔍 Verifying tools"
+                                which node || echo "❌ node not found"
+                                node -v || true
+                                which yarn || echo "❌ yarn not found"
+                                yarn -v || true
 
-                            echo "🏗️ Building installer..."
-                            yarn build
+                                echo "📦 Installing dependencies with cache"
+                                yarn config set cache-folder .yarn-cache
+                                yarn install --prefer-offline --frozen-lockfile
 
-                            echo "📁 Build output:"
-                            ls -lh dist || echo "❌ dist folder not created"
-                        '''
+                                echo "🏗️ Building installer..."
+                                yarn build
+
+                                echo "📁 Build output:"
+                                ls -lh dist || echo "❌ dist folder not created"
+                            '''
+                        }
                     }
                 }
             }
