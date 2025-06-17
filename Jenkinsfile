@@ -32,71 +32,47 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('src/client') {
-                    script {
-                        // Check if frontend files changed
-                        def changed = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
-                        def frontendChanged = changed.contains('src/client') || changed.contains('package.json')
+                script {
+                    def changed = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
 
-                        if (frontendChanged) {
+                    def setupNodeShell = '''
+                        setup_node() {
+                            export NVM_DIR="$HOME/.nvm"
+                            [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                            nvm install 18.20.8 || true
+                            nvm use 18.20.8
+                            export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+                        }
+                    '''
+
+                    if (changed.contains('src/client') || changed.contains('package.json')) {
+                        dir('src/client') {
                             echo 'Frontend changes detected – proceeding with build.'
-                            
-                            sh '''
-                                export NVM_DIR="$HOME/.nvm"
-                                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
-                                
-                                # Only install if not already present
-                                nvm install 18.20.8 || true
-                                nvm use 18.20.8
-
-                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
-
-                                # Use local cache for Yarn
+                            sh """
+                                ${setupNodeShell}
+                                setup_node
                                 yarn config set cache-folder .yarn-cache
-
-                                echo "Installing dependencies with cache..."
                                 yarn install --prefer-offline --frozen-lockfile
-
-                                echo "Building frontend..."
                                 yarn build
-                            '''
-                        } else {
-                            echo 'No frontend changes — skipping build step.'
+                            """
                         }
+                    } else {
+                        echo 'No frontend changes — skipping build step.'
                     }
-                }
 
-                dir('installer/client') {
-                    script {
-                        // Check if frontend files changed
-                        def changed = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
-                        def frontendChanged = changed.contains('installer/client') || changed.contains('package.json')
-
-                        if (frontendChanged) {
+                    if (changed.contains('installer/client') || changed.contains('package.json')) {
+                        dir('installer/client') {
                             echo 'Installer changes detected – proceeding with build.'
-                            
-                            sh '''
-                                export NVM_DIR="$HOME/.nvm"
-                                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
-                                
-                                # Only install if not already present
-                                nvm install 18.20.8 || true
-                                nvm use 18.20.8
-
-                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
-
-                                # Use local cache for Yarn
+                            sh """
+                                ${setupNodeShell}
+                                setup_node
                                 yarn config set cache-folder .yarn-cache
-
-                                echo "Installing dependencies with cache..."
                                 yarn install --prefer-offline --frozen-lockfile
-
-                                echo "Building installer..."
                                 yarn build
-                            '''
-                        } else {
-                            echo 'No installer changes — skipping build step.'
+                            """
                         }
+                    } else {
+                        echo 'No installer changes — skipping build step.'
                     }
                 }
             }
