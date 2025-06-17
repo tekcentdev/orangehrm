@@ -65,6 +65,40 @@ pipeline {
                         }
                     }
                 }
+
+                dir('installer/client') {
+                    script {
+                        // Check if frontend files changed
+                        def changed = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
+                        def frontendChanged = changed.contains('installer/client') || changed.contains('package.json')
+
+                        if (frontendChanged) {
+                            echo 'Installer changes detected – proceeding with build.'
+                            
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                                
+                                # Only install if not already present
+                                nvm install 18.20.8 || true
+                                nvm use 18.20.8
+
+                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+
+                                # Use local cache for Yarn
+                                yarn config set cache-folder .yarn-cache
+
+                                echo "Installing dependencies with cache..."
+                                yarn install --prefer-offline --frozen-lockfile
+
+                                echo "Building installer..."
+                                yarn build
+                            '''
+                        } else {
+                            echo 'No installer changes — skipping build step.'
+                        }
+                    }
+                }
             }
         }
 
