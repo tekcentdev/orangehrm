@@ -54,6 +54,7 @@ pipeline {
                                 yarn config set cache-folder .yarn-cache
                                 yarn install --prefer-offline --frozen-lockfile
                                 yarn build
+                                ls -lh dist || echo "❌ src/client/dist/ not created"
                             """
                         }
                     } else {
@@ -69,6 +70,7 @@ pipeline {
                                 yarn config set cache-folder .yarn-cache
                                 yarn install --prefer-offline --frozen-lockfile
                                 yarn build
+                                ls -lh dist || echo "❌ /installer/client/dist/ not created"
                             """
                         }
                     } else {
