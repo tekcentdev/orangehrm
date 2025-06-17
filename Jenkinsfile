@@ -3,10 +3,11 @@ pipeline {
 
     environment {
         PHP_VERSION = '8.3'
-        DEPLOY_PATH = '/var/www/html/orangehrm' // Default path, overridden by branch
+        DEPLOY_PATH = '/var/www/html/orangehrm' // Default path
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 checkout scm
@@ -36,12 +37,14 @@ pipeline {
                         dir('src/client') {
                             echo '⚙️ Building frontend (src/client)...'
                             sh '''
-                                echo "🔧 Setting up Node environment"
                                 export NVM_DIR="$HOME/.nvm"
                                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                                 nvm install 18.20.8 || true
                                 nvm use 18.20.8
                                 export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+
+                                echo "Installing Yarn globally"
+                                npm install -g yarn
 
                                 echo "🔍 Verifying tools"
                                 which node || echo "❌ node not found"
@@ -68,12 +71,14 @@ pipeline {
                         dir('installer/client') {
                             echo '⚙️ Building installer (installer/client)...'
                             sh '''
-                                echo "🔧 Setting up Node environment"
                                 export NVM_DIR="$HOME/.nvm"
                                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                                 nvm install 18.20.8 || true
                                 nvm use 18.20.8
                                 export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+
+                                echo "Installing Yarn globally"
+                                npm install -g yarn
 
                                 echo "🔍 Verifying tools"
                                 which node || echo "❌ node not found"
