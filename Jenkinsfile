@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PHP_VERSION = '8.3'
-        DEPLOY_PATH = '/var/www/html/orangehrm' // dynamically overridden
+        DEPLOY_PATH = '/var/www/html/orangehrm' // Will be overridden dynamically
     }
 
     stages {
@@ -35,25 +35,27 @@ pipeline {
                 script {
                     def changed = sh(script: "git show --pretty='' --name-only", returnStdout: true).trim()
 
-                    def buildCommands = '''
-                        export NVM_DIR="$HOME/.nvm"
-                        [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
-                        nvm install 18.20.8 || true
-                        nvm use 18.20.8
-                        export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
-
-                        yarn config set cache-folder .yarn-cache
-                        yarn install --prefer-offline --frozen-lockfile
-                        yarn build
+                    def setupNodeShell = '''#!/bin/bash
+                        setup_node() {
+                            export NVM_DIR="$HOME/.nvm"
+                            [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                            nvm install 18.20.8 || true
+                            nvm use 18.20.8
+                            export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+                        }
+                        setup_node
                     '''
 
                     if (changed.contains('src/client') || changed.contains('package.json')) {
                         dir('src/client') {
                             echo 'Frontend changes detected – proceeding with build.'
                             sh """
-                                ${buildCommands}
-                                echo "Checking dist output:"
-                                ls -lh dist || echo "❌ src/client/dist not created"
+                                ${setupNodeShell}
+                                yarn config set cache-folder .yarn-cache
+                                yarn install --prefer-offline --frozen-lockfile
+                                echo "Working dir: \$(pwd)"
+                                yarn build
+                                ls -lh dist || echo "❌ src/client/dist/ not created"
                             """
                         }
                     } else {
@@ -64,9 +66,12 @@ pipeline {
                         dir('installer/client') {
                             echo 'Installer changes detected – proceeding with build.'
                             sh """
-                                ${buildCommands}
-                                echo "Checking dist output:"
-                                ls -lh dist || echo "❌ installer/client/dist not created"
+                                ${setupNodeShell}
+                                yarn config set cache-folder .yarn-cache
+                                yarn install --prefer-offline --frozen-lockfile
+                                echo "Working dir: \$(pwd)"
+                                yarn build
+                                ls -lh dist || echo "❌ installer/client/dist/ not created"
                             """
                         }
                     } else {
@@ -79,6 +84,7 @@ pipeline {
         stage('Determine Environment') {
             steps {
                 script {
+                    def deployPath = ''
                     if (env.BRANCH_NAME ==~ /^dev\/.*/ || env.BRANCH_NAME ==~ /^feature\/.*/) {
                         deployPath = '/var/www/html/orangehrm/test'
                     } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME ==~ /^release\/.*/) {
@@ -86,6 +92,7 @@ pipeline {
                     } else {
                         error("Branch '${env.BRANCH_NAME}' is not allowed to deploy.")
                     }
+
                     writeFile file: 'deploy.path', text: deployPath
                 }
             }
@@ -102,9 +109,9 @@ pipeline {
                     DEPLOY_PATH=$(cat deploy.path)
                     echo "Deploying to $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH"
                     rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
-                    --exclude='.git' --exclude='tests' \
-                    ./ \
-                    $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+                        --exclude='.git' --exclude='tests' \
+                        ./ \
+                        $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
                     '''
                 }
             }
