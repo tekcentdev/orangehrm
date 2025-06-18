@@ -54,51 +54,55 @@ pipeline {
         }
 
         stage('Build') {
-            steps {
-                script {
-                    parallel(
-                        "Build Frontend": {
-                            dir('src/client') {
-                                echo '⚙️ Building frontend (src/client)...'
-                                sh '''
-                                    set -e
-                                    export NVM_DIR="$HOME/.nvm"
-                                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                                    nvm install 18.20.8 || true
-                                    nvm use 18.20.8
-                                    export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
-                                    if ! command -v yarn >/dev/null 2>&1; then
-                                        npm install -g yarn
-                                    fi
-                                    yarn install
-                                    yarn build || { echo "❌ yarn build failed"; exit 1; }
-                                    ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
-                                '''
-                            }
-                        },
-                        "Build Installer": {
-                            dir('installer/client') {
-                                echo '⚙️ Building installer (installer/client)...'
-                                sh '''
-                                    set -e
-                                    export NVM_DIR="$HOME/.nvm"
-                                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                                    nvm install 18.20.8 || true
-                                    nvm use 18.20.8
-                                    export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
-                                    if ! command -v yarn >/dev/null 2>&1; then
-                                        npm install -g yarn
-                                    fi
-                                    yarn install
-                                    yarn build || { echo "❌ yarn build failed"; exit 1; }
-                                    ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
-                                '''
-                            }
+            parallel {
+                stage('Build Frontend') {
+                    agent { label 'HKLIN03' }
+                    steps {
+                        dir('src/client') {
+                            echo '⚙️ Building frontend (src/client)...'
+                            sh '''
+                                set -e
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                                nvm install 18.20.8 || true
+                                nvm use 18.20.8
+                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+                                if ! command -v yarn >/dev/null 2>&1; then
+                                    npm install -g yarn
+                                fi
+                                yarn install
+                                yarn build || { echo "❌ yarn build failed"; exit 1; }
+                                ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
+                            '''
                         }
-                    )
+                    }
+                }
+
+                stage('Build Installer') {
+                    agent { label 'HKLIN03' }
+                    steps {
+                        dir('installer/client') {
+                            echo '⚙️ Building installer (installer/client)...'
+                            sh '''
+                                set -e
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                                nvm install 18.20.8 || true
+                                nvm use 18.20.8
+                                export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+                                if ! command -v yarn >/dev/null 2>&1; then
+                                    npm install -g yarn
+                                fi
+                                yarn install
+                                yarn build || { echo "❌ yarn build failed"; exit 1; }
+                                ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
+                            '''
+                        }
+                    }
                 }
             }
-        } 
+        }
+ 
 
         stage('Deploy') {
             steps {
