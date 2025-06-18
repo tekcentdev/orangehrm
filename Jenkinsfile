@@ -15,17 +15,22 @@ pipeline {
 
         stage('Install PHP Dependencies') {
             steps {
-                dir('src') {
-                    echo "Installing PHP dependencies using Composer"
-                    sh '''
-                        php -v
-                        if [ -f composer.json ]; then
-                            composer install --no-interaction --prefer-dist
-                        else
-                            echo "composer.json not found, skipping Composer install."
-                        fi
-                    '''
-                }
+                echo "📦 Installing Composer dependencies at project root"
+                sh '''
+                    php -v
+                    if [ -f composer.json ]; then
+                        echo "Running composer install..."
+                        composer install --no-interaction --prefer-dist
+                    else
+                        echo "❌ composer.json not found in root directory."
+                        exit 1
+                    fi
+
+                    if [ ! -f vendor/autoload.php ]; then
+                        echo "❌ vendor/autoload.php missing after install."
+                        exit 1
+                    fi
+                '''
             }
         }
 
@@ -50,7 +55,7 @@ pipeline {
                                     echo "✅ Yarn already installed: $(yarn -v)"
                                 fi
 
-                                echo "📦 Installing dependencies with Yarn 4"
+                                echo "📦 Installing dependencies with Yarn"
                                 yarn install
 
                                 echo "🏗️ Building frontend..."
@@ -82,7 +87,7 @@ pipeline {
                                     echo "✅ Yarn already installed: $(yarn -v)"
                                 fi
 
-                                echo "📦 Installing dependencies with Yarn 4"
+                                echo "📦 Installing dependencies with Yarn"
                                 yarn install
 
                                 echo "🏗️ Building installer..."
@@ -151,14 +156,14 @@ pipeline {
                             sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
                         ]) {
                             sh """
-                                scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$deployPath/.env                                
+                                scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$deployPath/.env
                             """
                         }
                     }
                 }
             }
         }
-        
+
         stage('Deploy') {
             steps {
                 withCredentials([
