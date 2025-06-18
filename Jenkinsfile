@@ -68,7 +68,7 @@ pipeline {
                             npm install -g yarn
                         fi
                         yarn install
-                        echo "🏗️ Running build..."
+                        echo "🏗️ Running frontend build..."
                         yarn build || { echo "❌ yarn build failed"; exit 1; }
                         echo "📁 Output files:"
                         ls -l || true
@@ -93,7 +93,7 @@ pipeline {
                             npm install -g yarn
                         fi
                         yarn install
-                        echo "🏗️ Running build..."
+                        echo "🏗️ Running installer build..."
                         yarn build || { echo "❌ yarn build failed"; exit 1; }
                         echo "📁 Output files:"
                         ls -l || true
