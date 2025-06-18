@@ -1,6 +1,6 @@
 <?php
 // --- Load .env securely ---
-$_ENV = parse_ini_file(__DIR__ . '/../.env') ?: [];
+$_ENV = parse_ini_file(__DIR__ . '/../shared/.env') ?: [];
 
 // --- Secure env var helper ---
 function requireEnv(string $key): string {
@@ -74,7 +74,7 @@ if (!$jwt) {
 }
 
 try {
-    $validator = new JwtValidator(__DIR__ . '/../shared/certs/cloudflare.pem');
+    $validator = new JwtValidator(__DIR__ . '/../shared/cloudflare.pem');
     $email = $validator->getEmailFromJWT($jwt);
 } catch (Exception $e) {
     http_response_code(403);
