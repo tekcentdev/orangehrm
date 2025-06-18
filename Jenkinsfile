@@ -56,7 +56,6 @@ pipeline {
         stage('Build') {
             parallel {
                 stage('Build Frontend') {
-                    agent { label 'HKLIN03' }
                     steps {
                         dir('src/client') {
                             echo '⚙️ Building frontend (src/client)...'
