@@ -62,6 +62,7 @@ pipeline {
                         }
                     }
                 }
+
                 stage('Build Installer') {
                     steps {
                         dir('installer/client') {
@@ -113,6 +114,52 @@ pipeline {
             }
         }
 
+        stage('Deploy .env file') {
+            steps {
+                script {
+                    def deployPath = readFile('deploy.path').trim()
+                    def envPrefix = (deployPath.contains('/test')) ? 'test' : 'prod'
+
+                    def dbCredsId = "ohrm_db_credentials_${envPrefix}"
+                    def dbHostId = "ohrm_db_host_${envPrefix}"
+                    def dbNameId = "ohrm_db_name_${envPrefix}"
+
+                    def credentials = [
+                        usernamePassword(credentialsId: dbCredsId, usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS'),
+                        string(credentialsId: dbHostId, variable: 'DB_HOST'),
+                        string(credentialsId: dbNameId, variable: 'DB_NAME'),
+                        string(credentialsId: 'ohrm_cookie_domain', variable: 'COOKIE_DOMAIN'),
+                        string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL')
+                    ]
+
+                    withCredentials(credentials) {
+                        def envContent = """
+                        OHRM_DB_HOST=${DB_HOST}
+                        OHRM_DB_USER=${DB_USER}
+                        OHRM_DB_PASS=${DB_PASS}
+                        OHRM_DB_NAME=${DB_NAME}
+                        CF_LAUNCHER=${CF_APP_URL}
+                        COOKIE_NAME=orangehrm
+                        COOKIE_DOMAIN=${COOKIE_DOMAIN}
+                        """.stripIndent()
+
+                        writeFile file: '.env.generated', text: envContent
+
+                        withCredentials([
+                            string(credentialsId: 'orangehrm-deploy-user', variable: 'DEPLOY_USER'),
+                            string(credentialsId: 'orangehrm-deploy-host', variable: 'DEPLOY_HOST'),
+                            sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
+                        ]) {
+                            sh """
+                                scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$deployPath/.env
+                                ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "chmod 600 $deployPath/.env && chown www-data:www-data $deployPath/.env"
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        
         stage('Deploy') {
             steps {
                 withCredentials([
@@ -125,7 +172,7 @@ pipeline {
                         echo "🚀 Deploying to $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH"
 
                         rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
-                        --exclude='.git' --exclude='tests' \
+                        --exclude='.git' --exclude='tests' --exclude='.env.generated' \
                         ./ \
                         $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
                     '''
