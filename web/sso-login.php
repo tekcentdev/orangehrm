@@ -74,7 +74,7 @@ if (!$jwt) {
 }
 
 try {
-    $validator = new JwtValidator(__DIR__ . '/../lib/cloudflare.pem');
+    $validator = new JwtValidator(__DIR__ . '/../shared/certs/cloudflare.pem');
     $email = $validator->getEmailFromJWT($jwt);
 } catch (Exception $e) {
     http_response_code(403);
