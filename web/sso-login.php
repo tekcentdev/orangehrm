@@ -30,7 +30,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Autoload Composer dependencies
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../src/vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;

@@ -15,22 +15,24 @@ pipeline {
 
         stage('Install PHP Dependencies') {
             steps {
-                echo "📦 Installing Composer dependencies at project root"
-                sh '''
-                    php -v
-                    if [ -f composer.json ]; then
-                        echo "Running composer install..."
-                        composer install --no-interaction --prefer-dist
-                    else
-                        echo "❌ composer.json not found in root directory."
-                        exit 1
-                    fi
+                dir('src') {
+                    echo "📦 Installing Composer dependencies in src/"
+                    sh '''
+                        php -v
+                        if [ -f composer.json ]; then
+                            echo "Running composer install..."
+                            composer install --no-interaction --prefer-dist
+                        else
+                            echo "❌ composer.json not found in src/"
+                            exit 1
+                        }
 
-                    if [ ! -f vendor/autoload.php ]; then
-                        echo "❌ vendor/autoload.php missing after install."
-                        exit 1
-                    fi
-                '''
+                        if [ ! -f vendor/autoload.php ]; then
+                            echo "❌ vendor/autoload.php missing after install."
+                            exit 1
+                        fi
+                    '''
+                }
             }
         }
 
