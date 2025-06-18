@@ -166,6 +166,24 @@ pipeline {
             }
         }
 
+        stage('Deploy Cloudflare Certs') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'orangehrm-deploy-user', variable: 'DEPLOY_USER'),
+                    string(credentialsId: 'orangehrm-deploy-host', variable: 'DEPLOY_HOST'),
+                    sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY'),
+                    file(credentialsId: 'cloudflare-public-key', variable: 'PEM_FILE')
+                ]) {
+                    sh """
+                        PEM_TARGET_PATH=\$DEPLOY_PATH/shared/certs
+                        ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$DEPLOY_USER@\$DEPLOY_HOST "mkdir -p \$PEM_TARGET_PATH"
+                        scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$PEM_FILE \$DEPLOY_USER@\$DEPLOY_HOST:\$PEM_TARGET_PATH/cloudflare.pem                        
+                    """
+                }
+            }
+        }
+
+
         stage('Deploy') {
             steps {
                 withCredentials([
