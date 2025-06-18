@@ -25,7 +25,7 @@ pipeline {
                         else
                             echo "❌ composer.json not found in src/"
                             exit 1
-                        }
+                        fi
 
                         if [ ! -f vendor/autoload.php ]; then
                             echo "❌ vendor/autoload.php missing after install."
