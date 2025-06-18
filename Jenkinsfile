@@ -138,8 +138,8 @@ pipeline {
                         OHRM_DB_USER=${DB_USER}
                         OHRM_DB_PASS=${DB_PASS}
                         OHRM_DB_NAME=${DB_NAME}
+                        OHRM_SESSION_NAME=orangehrm
                         CF_LAUNCHER=${CF_APP_URL}
-                        COOKIE_NAME=orangehrm
                         COOKIE_DOMAIN=${COOKIE_DOMAIN}
                         """.stripIndent()
 
