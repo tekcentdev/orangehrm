@@ -59,25 +59,21 @@ pipeline {
                     echo '⚙️ Building frontend (src/client)...'
                     sh '''
                         set -e
-                        export NVM_DIR="$HOME/.nvm"
-                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                        nvm install 18.20.8 || true
-                        nvm use 18.20.8
-                        export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
+
+                        echo "🔧 Skipping nvm use; using system Node: $(node -v)"
                         if ! command -v yarn >/dev/null 2>&1; then
+                            echo "Installing yarn..."
                             npm install -g yarn
                         fi
+
                         yarn install
-                        echo "🏗️ Running frontend build..."
                         yarn build || { echo "❌ yarn build failed"; exit 1; }
-                        echo "📁 Output files:"
-                        ls -l || true
                         ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
                     '''
                 }
             }
         }
-
+        
         stage('Build Installer') {
             steps {
                 dir('installer/client') {
