@@ -121,17 +121,19 @@ pipeline {
             }
         }        
 
-        stage('Deploy .env file') {
+        stage('Deploy') {
             steps {
                 script {
                     def deployPath = readFile('deploy.path').trim()
+                    def sharedPath = "${deployPath}/shared"
                     def envPrefix = (deployPath.contains('/test')) ? 'test' : 'prod'
 
+                    // Generate .env file
                     def dbCredsId = "ohrm_db_credentials_${envPrefix}"
                     def dbHostId = "ohrm_db_host_${envPrefix}"
                     def dbNameId = "ohrm_db_name_${envPrefix}"
 
-                    def credentials = [
+                    def envCredentials = [
                         usernamePassword(credentialsId: dbCredsId, usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS'),
                         string(credentialsId: dbHostId, variable: 'DB_HOST'),
                         string(credentialsId: dbNameId, variable: 'DB_NAME'),
@@ -139,7 +141,7 @@ pipeline {
                         string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL')
                     ]
 
-                    withCredentials(credentials) {
+                    withCredentials(envCredentials) {
                         def envContent = """
                         OHRM_DB_HOST=${DB_HOST}
                         OHRM_DB_USER=${DB_USER}
@@ -151,26 +153,7 @@ pipeline {
                         """.stripIndent()
 
                         writeFile file: '.env.generated', text: envContent
-
-                        withCredentials([
-                            string(credentialsId: 'orangehrm-deploy-user', variable: 'DEPLOY_USER'),
-                            string(credentialsId: 'orangehrm-deploy-host', variable: 'DEPLOY_HOST'),
-                            sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
-                        ]) {
-                            sh """
-                                scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$deployPath/.env
-                            """
-                        }
                     }
-                }
-            }
-        }
-
-        stage('Deploy Cloudflare Certs') {
-            steps {
-                script {
-                    def deployPath = readFile('deploy.path').trim()
-                    def certPath = "${deployPath}/shared/certs"
 
                     withCredentials([
                         string(credentialsId: 'orangehrm-deploy-user', variable: 'DEPLOY_USER'),
@@ -179,30 +162,25 @@ pipeline {
                         file(credentialsId: 'cloudflare-public-key', variable: 'PEM_FILE')
                     ]) {
                         sh """
-                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $certPath"
-                            scp -i $SSH_KEY -o StrictHostKeyChecking=no $PEM_FILE $DEPLOY_USER@$DEPLOY_HOST:$certPath/cloudflare.pem
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    def deployPath = readFile('deploy.path').trim()
-
-                    withCredentials([
-                        string(credentialsId: 'orangehrm-deploy-user', variable: 'DEPLOY_USER'),
-                        string(credentialsId: 'orangehrm-deploy-host', variable: 'DEPLOY_HOST'),
-                        sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
-                    ]) {
-                        sh """
                             echo "🚀 Deploying to $DEPLOY_USER@$DEPLOY_HOST:$deployPath"
 
-                            rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
-                            --exclude='.git' --exclude='tests' --exclude='.env.generated' \
-                            ./ \
+                            # Create shared directory
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $sharedPath"
+
+                            # Copy .env and cert
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/.env
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no $PEM_FILE $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/cloudflare.pem
+
+                            # Set secure ownership and permissions
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \\
+                            "chown $DEPLOY_USER:www-data $sharedPath/.env $sharedPath/cloudflare.pem && \\
+                            chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
+                            chmod 755 $sharedPath"
+
+                            # Deploy code via rsync
+                            rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \\
+                            --exclude='.git' --exclude='tests' --exclude='.env.generated' \\
+                            ./ \\
                             $DEPLOY_USER@$DEPLOY_HOST:$deployPath
                         """
                     }
