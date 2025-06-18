@@ -53,13 +53,15 @@ pipeline {
             }
         }
 
-        stage('Build Frontend & Installer') {
+        stage('Build') {
             parallel {
                 stage('Build Frontend') {
                     steps {
                         dir('src/client') {
                             echo '⚙️ Building frontend (src/client)...'
                             sh '''
+                                set -e
+
                                 export NVM_DIR="$HOME/.nvm"
                                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                                 nvm install 18.20.8 || true
@@ -78,10 +80,10 @@ pipeline {
                                 yarn install
 
                                 echo "🏗️ Building frontend..."
-                                yarn build
+                                yarn build || { echo "❌ yarn build failed"; exit 1; }
 
                                 echo "📁 Build output:"
-                                ls -lh dist || echo "❌ dist folder not created"
+                                ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output folder found"
                             '''
                         }
                     }
@@ -92,6 +94,8 @@ pipeline {
                         dir('installer/client') {
                             echo '⚙️ Building installer (installer/client)...'
                             sh '''
+                                set -e
+
                                 export NVM_DIR="$HOME/.nvm"
                                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                                 nvm install 18.20.8 || true
@@ -110,16 +114,17 @@ pipeline {
                                 yarn install
 
                                 echo "🏗️ Building installer..."
-                                yarn build
+                                yarn build || { echo "❌ yarn build failed"; exit 1; }
 
                                 echo "📁 Build output:"
-                                ls -lh dist || echo "❌ dist folder not created"
+                                ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output folder found"
                             '''
                         }
                     }
                 }
             }
-        }        
+        }
+     
 
         stage('Deploy') {
             steps {
