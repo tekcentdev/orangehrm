@@ -151,8 +151,7 @@ pipeline {
                             sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
                         ]) {
                             sh """
-                                scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$deployPath/.env
-                                ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "chmod 600 $deployPath/.env && chown www-data:www-data $deployPath/.env"
+                                scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$deployPath/.env                                
                             """
                         }
                     }
