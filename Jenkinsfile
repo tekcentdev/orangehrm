@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PHP_VERSION = '8.3'
-        DEPLOY_PATH = '/var/www/html/orangehrm'
+        DEPLOY_PATH = '/var/www/html/orangehrm' // Default fallback
     }
 
     stages {
@@ -58,24 +58,16 @@ pipeline {
                     echo '⚙️ Building frontend (src/client)...'
                     sh '''
                         set -e
+
                         echo "🔧 Node: $(node -v)"
-                        
-                        if command -v corepack >/dev/null 2>&1; then
-                            echo "🔧 Using corepack (Node >=16)"
-                            corepack enable
-                            corepack prepare yarn@stable --activate
-                        elif [ ! -f node_modules/.bin/yarn ]; then
-                            echo "📥 Installing local yarn..."
-                            npm install --no-save yarn
+                        if [ ! -f node_modules/.bin/yarn ]; then
+                            echo "Installing yarn locally..."
+                            npm install yarn
                         fi
 
-                        echo "📦 Installing dependencies..."
                         npx yarn install
-
-                        echo "🏗️ Building frontend..."
                         npx yarn build || { echo "❌ yarn build failed"; exit 1; }
 
-                        echo "📁 Verifying build output..."
                         ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
                     '''
                 }
@@ -92,21 +84,15 @@ pipeline {
                         [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                         nvm install 18.20.8 || true
                         nvm use 18.20.8
-                        echo "🔧 Node: $(node -v)"
+                        export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
 
-                        if command -v corepack >/dev/null 2>&1; then
-                            echo "🔧 Using corepack"
-                            corepack enable
-                            corepack prepare yarn@stable --activate
-                        elif [ ! -f node_modules/.bin/yarn ]; then
-                            echo "📥 Installing local yarn..."
-                            npm install --no-save yarn
+                        if [ ! -f node_modules/.bin/yarn ]; then
+                            echo "Installing yarn locally..."
+                            npm install yarn
                         fi
 
-                        echo "📦 Installing dependencies..."
                         npx yarn install
-
-                        echo "🏗️ Running build..."
+                        echo "🏗️ Running installer build..."
                         npx yarn build || { echo "❌ yarn build failed"; exit 1; }
 
                         echo "📁 Output files:"
@@ -160,13 +146,14 @@ pipeline {
                             echo "🚀 Deploying to $DEPLOY_USER@$DEPLOY_HOST:$deployPath"
 
                             ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $sharedPath"
+
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/.env
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no $PEM_FILE $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/cloudflare.pem
 
                             ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \\
                             "chown $DEPLOY_USER:www-data $sharedPath/.env $sharedPath/cloudflare.pem && \\
-                             chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
-                             chmod 755 $sharedPath"
+                            chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
+                            chmod 755 $sharedPath"
 
                             rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \\
                             --exclude='.git' --exclude='tests' --exclude='.env.generated' \\
