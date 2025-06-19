@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PHP_VERSION = '8.3'
-        DEPLOY_PATH = '/var/www/html/orangehrm' // Default fallback, overridden by branch
+        DEPLOY_PATH = '/var/www/html/orangehrm'
     }
 
     stages {
@@ -24,7 +24,6 @@ pipeline {
                     } else {
                         error("❌ Branch '${env.BRANCH_NAME}' is not allowed to deploy.")
                     }
-
                     writeFile file: 'deploy.path', text: deployPath
                 }
             }
@@ -59,21 +58,30 @@ pipeline {
                     echo '⚙️ Building frontend (src/client)...'
                     sh '''
                         set -e
-
-                        echo "🔧 Skipping nvm use; using system Node: $(node -v)"
-                        if ! command -v yarn >/dev/null 2>&1; then
-                            echo "Installing yarn..."
-                            npm install -g yarn
+                        echo "🔧 Node: $(node -v)"
+                        
+                        if command -v corepack >/dev/null 2>&1; then
+                            echo "🔧 Using corepack (Node >=16)"
+                            corepack enable
+                            corepack prepare yarn@stable --activate
+                        elif [ ! -f node_modules/.bin/yarn ]; then
+                            echo "📥 Installing local yarn..."
+                            npm install --no-save yarn
                         fi
 
-                        yarn install
-                        yarn build || { echo "❌ yarn build failed"; exit 1; }
+                        echo "📦 Installing dependencies..."
+                        npx yarn install
+
+                        echo "🏗️ Building frontend..."
+                        npx yarn build || { echo "❌ yarn build failed"; exit 1; }
+
+                        echo "📁 Verifying build output..."
                         ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
                     '''
                 }
             }
         }
-        
+
         stage('Build Installer') {
             steps {
                 dir('installer/client') {
@@ -84,13 +92,23 @@ pipeline {
                         [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                         nvm install 18.20.8 || true
                         nvm use 18.20.8
-                        export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
-                        if ! command -v yarn >/dev/null 2>&1; then
-                            npm install -g yarn
+                        echo "🔧 Node: $(node -v)"
+
+                        if command -v corepack >/dev/null 2>&1; then
+                            echo "🔧 Using corepack"
+                            corepack enable
+                            corepack prepare yarn@stable --activate
+                        elif [ ! -f node_modules/.bin/yarn ]; then
+                            echo "📥 Installing local yarn..."
+                            npm install --no-save yarn
                         fi
-                        yarn install
-                        echo "🏗️ Running installer build..."
-                        yarn build || { echo "❌ yarn build failed"; exit 1; }
+
+                        echo "📦 Installing dependencies..."
+                        npx yarn install
+
+                        echo "🏗️ Running build..."
+                        npx yarn build || { echo "❌ yarn build failed"; exit 1; }
+
                         echo "📁 Output files:"
                         ls -l || true
                         ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
@@ -99,8 +117,6 @@ pipeline {
             }
         }
 
- 
-
         stage('Deploy') {
             steps {
                 script {
@@ -108,7 +124,6 @@ pipeline {
                     def sharedPath = "${deployPath}/shared"
                     def envPrefix = (deployPath.contains('/test')) ? 'test' : 'prod'
 
-                    // Generate .env file
                     def dbCredsId = "ohrm_db_credentials_${envPrefix}"
                     def dbHostId = "ohrm_db_host_${envPrefix}"
                     def dbNameId = "ohrm_db_name_${envPrefix}"
@@ -144,20 +159,15 @@ pipeline {
                         sh """
                             echo "🚀 Deploying to $DEPLOY_USER@$DEPLOY_HOST:$deployPath"
 
-                            # Create shared directory
                             ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $sharedPath"
-
-                            # Copy .env and cert
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/.env
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no $PEM_FILE $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/cloudflare.pem
 
-                            # Set secure ownership and permissions
                             ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \\
                             "chown $DEPLOY_USER:www-data $sharedPath/.env $sharedPath/cloudflare.pem && \\
-                            chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
-                            chmod 755 $sharedPath"
+                             chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
+                             chmod 755 $sharedPath"
 
-                            # Deploy code via rsync
                             rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \\
                             --exclude='.git' --exclude='tests' --exclude='.env.generated' \\
                             ./ \\
