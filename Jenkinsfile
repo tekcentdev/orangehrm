@@ -80,23 +80,16 @@ pipeline {
                     echo '⚙️ Building installer (installer/client)...'
                     sh '''
                         set -e
-                        export NVM_DIR="$HOME/.nvm"
-                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                        nvm install 18.20.8 || true
-                        nvm use 18.20.8
-                        export PATH="$HOME/.nvm/versions/node/v18.20.8/bin:$PATH"
 
+                        echo "🔧 Node: $(node -v)"
                         if [ ! -f node_modules/.bin/yarn ]; then
                             echo "Installing yarn locally..."
                             npm install yarn
                         fi
 
-                        npx yarn install --immutable
-                        echo "🏗️ Running installer build..."
+                        npx yarn install --immutable                        
                         npx yarn build || { echo "❌ yarn build failed"; exit 1; }
 
-                        echo "📁 Output files:"
-                        ls -l || true
                         ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
                     '''
                 }
