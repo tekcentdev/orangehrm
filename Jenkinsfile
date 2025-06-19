@@ -65,7 +65,7 @@ pipeline {
                             npm install yarn
                         fi
 
-                        npx yarn install
+                        npx yarn install --immutable
                         npx yarn build || { echo "❌ yarn build failed"; exit 1; }
 
                         ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
@@ -91,7 +91,7 @@ pipeline {
                             npm install yarn
                         fi
 
-                        npx yarn install
+                        npx yarn install --immutable
                         echo "🏗️ Running installer build..."
                         npx yarn build || { echo "❌ yarn build failed"; exit 1; }
 
