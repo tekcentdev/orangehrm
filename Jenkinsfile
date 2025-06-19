@@ -68,7 +68,7 @@ pipeline {
                         npx yarn install --immutable
                         npx yarn build || { echo "❌ yarn build failed"; exit 1; }
 
-                        ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
+                        ls -lh dist || ls -lh build || ls -lh .next || ls -lh ../../web/dist || echo "❌ No build output"
                     '''
                 }
             }
