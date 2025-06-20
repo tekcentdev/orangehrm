@@ -99,6 +99,20 @@ pipeline {
             }
         }
 
+        stage('Generate Version Info') {
+            steps {
+                script {
+                    def timestamp = new Date().format("yyyy-MM-dd HH:mm:ss", TimeZone.getTimeZone('Asia/Hong_Kong'))
+                    def versionContent = """\
+                        Branch: ${env.BRANCH_NAME}
+                        Build: #${env.BUILD_NUMBER}
+                        Built at: ${timestamp}
+                    """.stripIndent()
+                    
+                    writeFile file: 'version.txt', text: versionContent
+                }
+            }
+        }
 
         stage('Deploy') {
             steps {
