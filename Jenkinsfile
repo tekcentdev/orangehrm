@@ -153,7 +153,7 @@ pipeline {
                             chmod 755 $sharedPath"
 
                             rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \\
-                            --exclude='.git' --exclude='tests' --exclude='.env.generated' \\
+                            --exclude='.git' --exclude='tests' --exclude='.env.generated' --exclude='deploy.path' --exclude='Jenkinsfile' \\
                             ./ \\
                             $DEPLOY_USER@$DEPLOY_HOST:$deployPath
                         """
