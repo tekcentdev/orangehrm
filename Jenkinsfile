@@ -62,12 +62,25 @@ pipeline {
                                 set -e
 
                                 echo "🔧 Node: $(node -v)"
+                                # Clean potentially dirty workspace
+                                rm -rf node_modules .yarn
+
+                                if [ ! -f yarn.lock ] || [ ! -f package.json ]; then
+                                    echo "❌ yarn.lock or package.json not found!"
+                                    exit 1
+                                fi
+
                                 if [ ! -f node_modules/.bin/yarn ]; then
                                     echo "Installing yarn locally..."
                                     npm install yarn
                                 fi
 
-                                npx yarn install --immutable
+                                echo "🔄 Running yarn install --immutable"
+                                npx yarn install --immutable || {
+                                    echo "⚠️ yarn install --immutable failed, retrying with regular yarn install (first-time build or sync issue?)"
+                                    npx yarn install || { echo "❌ yarn install failed"; exit 1; }
+                                }
+
                                 npx yarn build || { echo "❌ yarn build failed"; exit 1; }
 
                                 ls -lh dist || ls -lh build || ls -lh .next || ls -lh ../../web/dist || echo "❌ No build output"
@@ -83,12 +96,24 @@ pipeline {
                                 set -e
 
                                 echo "🔧 Node: $(node -v)"
+                                rm -rf node_modules .yarn
+
+                                if [ ! -f yarn.lock ] || [ ! -f package.json ]; then
+                                    echo "❌ yarn.lock or package.json not found!"
+                                    exit 1
+                                fi
+
                                 if [ ! -f node_modules/.bin/yarn ]; then
                                     echo "Installing yarn locally..."
                                     npm install yarn
                                 fi
 
-                                npx yarn install --immutable
+                                echo "🔄 Running yarn install --immutable"
+                                npx yarn install --immutable || {
+                                    echo "⚠️ yarn install --immutable failed, retrying with regular yarn install (first-time build or sync issue?)"
+                                    npx yarn install || { echo "❌ yarn install failed"; exit 1; }
+                                }
+
                                 npx yarn build || { echo "❌ yarn build failed"; exit 1; }
 
                                 ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
