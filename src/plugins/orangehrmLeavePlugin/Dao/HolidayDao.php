@@ -82,6 +82,11 @@ class HolidayDao extends BaseDao
         $q->andWhere($q->expr()->between('holiday.date', ':fromDate', ':toDate'))
             ->setParameter('fromDate', $holidaySearchFilterParams->getFromDate())
             ->setParameter('toDate', $holidaySearchFilterParams->getToDate());
+        if (!is_null($holidaySearchFilterParams->getLocationId())) {
+            $q->leftJoin('holiday.operationalCountry', 'oc')
+                ->andWhere('oc.id = :locationId')
+                ->setParameter('locationId', $holidaySearchFilterParams->getLocationId());
+        }
         if ($holidaySearchFilterParams->isExcludeRecurring()) {
             $q->andWhere('holiday.recurring = :recurring')
                 ->setParameter('recurring', false);

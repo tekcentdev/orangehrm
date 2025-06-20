@@ -27,6 +27,11 @@ class HolidaySearchFilterParams extends DateRangeSearchFilterParams
      */
     private bool $excludeRecurring = false;
 
+    /**
+     * @var int|null
+     */
+    private ?int $locationId = null;
+
     public function __construct()
     {
         $this->setSortField('holiday.date');
@@ -46,5 +51,21 @@ class HolidaySearchFilterParams extends DateRangeSearchFilterParams
     public function setExcludeRecurring(bool $excludeRecurring): void
     {
         $this->excludeRecurring = $excludeRecurring;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getLocationId(): ?int
+    {
+        return $this->locationId;
+    }
+
+    /**
+     * @param int|null $locationId
+     */
+    public function setLocationId(?int $locationId): void
+    {
+        $this->locationId = $locationId;
     }
 }

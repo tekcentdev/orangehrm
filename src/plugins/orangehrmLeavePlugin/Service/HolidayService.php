@@ -66,10 +66,11 @@ class HolidayService
      * @param DateTime $toDate
      * @return string
      */
-    protected function getHolidaysCacheKey(DateTime $fromDate, DateTime $toDate): string
+    protected function getHolidaysCacheKey(DateTime $fromDate, DateTime $toDate, ?int $locationId): string
     {
         return self::LEAVE_HOLIDAYS_CACHE_KEY_PREFIX .
-            '.' . $fromDate->format('Y_m_d') . '.' . $toDate->format('Y_m_d');
+            '.' . $fromDate->format('Y_m_d') . '.' . $toDate->format('Y_m_d') .
+            '.' . ($locationId ?? 'null');
     }
 
     /**
@@ -84,12 +85,14 @@ class HolidayService
         if ($limit == 0) {  // when check uniqueness
             return $this->searchHolidaysAlongWithCache(
                 $holidaySearchFilterParams->getFromDate(),
-                $holidaySearchFilterParams->getToDate()
+                $holidaySearchFilterParams->getToDate(),
+                $holidaySearchFilterParams->getLocationId()
             )[self::PARAMETER_DATA];
         }
         return array_slice($this->searchHolidaysAlongWithCache(
             $holidaySearchFilterParams->getFromDate(),
-            $holidaySearchFilterParams->getToDate()
+            $holidaySearchFilterParams->getToDate(),
+            $holidaySearchFilterParams->getLocationId()
         )[self::PARAMETER_DATA], $offset, $limit);
     }
 
@@ -101,7 +104,8 @@ class HolidayService
     {
         return $this->searchHolidaysAlongWithCache(
             $holidaySearchFilterParams->getFromDate(),
-            $holidaySearchFilterParams->getToDate()
+            $holidaySearchFilterParams->getToDate(),
+            $holidaySearchFilterParams->getLocationId()
         )[self::PARAMETER_TOTAL];
     }
 
@@ -110,12 +114,12 @@ class HolidayService
      * @param DateTime $toDate
      * @return array
      */
-    protected function searchHolidaysAlongWithCache(DateTime $fromDate, DateTime $toDate): array
+    protected function searchHolidaysAlongWithCache(DateTime $fromDate, DateTime $toDate, ?int $locationId): array
     {
         return $this->getCache()->get(
-            $this->getHolidaysCacheKey($fromDate, $toDate),
-            function () use ($fromDate, $toDate) {
-                $holidays = $this->getCalculatedHolidays($fromDate, $toDate);
+            $this->getHolidaysCacheKey($fromDate, $toDate, $locationId),
+            function () use ($fromDate, $toDate, $locationId) {
+                $holidays = $this->getCalculatedHolidays($fromDate, $toDate, $locationId);
                 return [self::PARAMETER_DATA => $holidays, self::PARAMETER_TOTAL => count($holidays)];
             }
         );
@@ -126,11 +130,12 @@ class HolidayService
      * @param DateTime $toDate
      * @return array
      */
-    protected function getCalculatedHolidays(DateTime $fromDate, DateTime $toDate): array
+    protected function getCalculatedHolidays(DateTime $fromDate, DateTime $toDate, ?int $locationId): array
     {
         $holidaySearchFilterParams = new HolidaySearchFilterParams();
         $holidaySearchFilterParams->setFromDate($fromDate);
         $holidaySearchFilterParams->setToDate($toDate);
+        $holidaySearchFilterParams->setLocationId($locationId);
         $holidayList = $this->getHolidayDao()->searchHolidays($holidaySearchFilterParams);
 
         $startYear = $fromDate->format('Y');

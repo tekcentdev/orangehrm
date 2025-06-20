@@ -45,9 +45,11 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
     public const PARAMETER_DATE = 'date';
     public const PARAMETER_RECURRING = 'recurring';
     public const PARAMETER_LENGTH = 'length';
+    public const PARAMETER_LOCATION_ID = 'locationId';
 
     public const FILTER_FROM_DATE = 'fromDate';
     public const FILTER_TO_DATE = 'toDate';
+    public const FILTER_LOCATION_ID = 'locationId';
 
     public const PARAM_RULE_NAME_MAX_LENGTH = 200;
 
@@ -133,6 +135,12 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
      *         required=false,
      *         @OA\Schema(type="string", enum=HolidaySearchFilterParams::ALLOWED_SORT_FIELDS)
      *     ),
+     *     @OA\Parameter(
+     *         name="locationId",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
      *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
      *     @OA\Parameter(ref="#/components/parameters/limit"),
      *     @OA\Parameter(ref="#/components/parameters/offset"),
@@ -164,6 +172,9 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
         $this->setSortingAndPaginationParams($holidaySearchFilterParams);
         $holidaySearchFilterParams->setFromDate($fromDate);
         $holidaySearchFilterParams->setToDate($toDate);
+        $holidaySearchFilterParams->setLocationId(
+            $this->getRequestParams()->getIntOrNull(RequestParams::PARAM_TYPE_QUERY, self::FILTER_LOCATION_ID)
+        );
         $holidays = $this->getHolidayService()->searchHolidays($holidaySearchFilterParams);
         $total = $this->getHolidayService()->searchHolidaysCount($holidaySearchFilterParams);
 
@@ -182,6 +193,9 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
         return new ParamRuleCollection(
             new ParamRule(self::FILTER_FROM_DATE, new Rule(Rules::API_DATE)),
             new ParamRule(self::FILTER_TO_DATE, new Rule(Rules::API_DATE)),
+            $this->getValidationDecorator()->notRequiredParamRule(
+                new ParamRule(self::FILTER_LOCATION_ID, new Rule(Rules::POSITIVE))
+            ),
             ...$this->getSortingAndPaginationParamsRules()
         );
     }
@@ -208,6 +222,7 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
      *                 maxLength=OrangeHRM\Leave\Api\HolidayAPI::PARAM_RULE_NAME_MAX_LENGTH
      *             ),
      *             @OA\Property(property="recurring", type="boolean"),
+     *             @OA\Property(property="locationId", type="integer"),
      *             required={"name", "date"}
      *         )
      *     ),
@@ -246,6 +261,9 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
             $this->getRequestParams()->getBoolean(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_RECURRING)
         );
         $holiday->setLength($this->getRequestParams()->getInt(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_LENGTH));
+        $holiday->getDecorator()->setOperationalCountryById(
+            $this->getRequestParams()->getIntOrNull(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_LOCATION_ID)
+        );
     }
 
     /**
@@ -280,6 +298,9 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
                 self::PARAMETER_LENGTH,
                 new Rule(Rules::IN, [array_keys(Holiday::HOLIDAY_LENGTH_MAP)])
             ),
+            $this->getValidationDecorator()->notRequiredParamRule(
+                new ParamRule(self::PARAMETER_LOCATION_ID, new Rule(Rules::POSITIVE))
+            ),
         );
     }
 
@@ -305,6 +326,7 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
      *             ),
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="recurring", type="boolean"),
+     *             @OA\Property(property="locationId", type="integer"),
      *         )
      *     ),
      *     @OA\Response(response="200",

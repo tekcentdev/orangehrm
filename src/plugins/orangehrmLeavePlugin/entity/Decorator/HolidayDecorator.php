@@ -19,11 +19,14 @@
 namespace OrangeHRM\Entity\Decorator;
 
 use OrangeHRM\Core\Traits\Service\DateTimeHelperTrait;
+use OrangeHRM\Core\Traits\ORM\EntityManagerHelperTrait;
 use OrangeHRM\Entity\Holiday;
+use OrangeHRM\Entity\OperationalCountry;
 
 class HolidayDecorator
 {
     use DateTimeHelperTrait;
+    use EntityManagerHelperTrait;
 
     /**
      * @var Holiday
@@ -61,5 +64,15 @@ class HolidayDecorator
     public function getLengthName(): ?string
     {
         return Holiday::HOLIDAY_LENGTH_MAP[$this->getHoliday()->getLength()] ?? null;
+    }
+
+    /**
+     * @param int|null $id
+     */
+    public function setOperationalCountryById(?int $id): void
+    {
+        /** @var OperationalCountry|null $country */
+        $country = is_null($id) ? null : $this->getReference(OperationalCountry::class, $id);
+        $this->getHoliday()->setOperationalCountry($country);
     }
 }
