@@ -100,7 +100,9 @@ class HolidayAPITest extends EndpointTestCase
                 "date" => "2021-12-25",
                 "recurring" => true,
                 "length" => 0,
-                "lengthName" => "Full Day"
+                "lengthName" => "Full Day",
+                "operationalCountryId" => 1,
+                "operationalCountryName" => "Sri Lanka"
             ],
             $result->normalize()
         );
@@ -175,6 +177,7 @@ class HolidayAPITest extends EndpointTestCase
                     HolidayAPI::PARAMETER_DATE => '2021-12-25',
                     HolidayAPI::PARAMETER_LENGTH => 0,
                     HolidayAPI::PARAMETER_RECURRING => true,
+                    HolidayAPI::PARAMETER_OPERATIONAL_COUNTRY_ID => 1,
                 ]
             ]
         )->onlyMethods(['getHolidayService'])
@@ -209,6 +212,7 @@ class HolidayAPITest extends EndpointTestCase
                     HolidayAPI::PARAMETER_DATE => '2021-12-25',
                     HolidayAPI::PARAMETER_LENGTH => 0,
                     HolidayAPI::PARAMETER_RECURRING => true,
+                    HolidayAPI::PARAMETER_OPERATIONAL_COUNTRY_ID => 1,
                 ],
                 $rules
             )
@@ -330,6 +334,7 @@ class HolidayAPITest extends EndpointTestCase
                     HolidayAPI::PARAMETER_DATE => '2021-12-25',
                     HolidayAPI::PARAMETER_LENGTH => 0,
                     HolidayAPI::PARAMETER_RECURRING => true,
+                    HolidayAPI::PARAMETER_OPERATIONAL_COUNTRY_ID => 1,
                 ]
             ]
         )->onlyMethods(['getHolidayService'])
@@ -346,7 +351,9 @@ class HolidayAPITest extends EndpointTestCase
                 "date" => "2021-12-25",
                 "recurring" => true,
                 "length" => 0,
-                "lengthName" => "Full Day"
+                "lengthName" => "Full Day",
+                "operationalCountryId" => 1,
+                "operationalCountryName" => "Sri Lanka"
             ],
             $result->normalize()
         );
@@ -363,6 +370,7 @@ class HolidayAPITest extends EndpointTestCase
                     HolidayAPI::PARAMETER_DATE => '2021-12-25',
                     HolidayAPI::PARAMETER_LENGTH => 0,
                     HolidayAPI::PARAMETER_RECURRING => true,
+                    HolidayAPI::PARAMETER_OPERATIONAL_COUNTRY_ID => 1,
                 ],
                 $rules
             )

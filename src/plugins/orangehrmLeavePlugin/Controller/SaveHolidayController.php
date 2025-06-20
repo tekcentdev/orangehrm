@@ -22,12 +22,15 @@ use OrangeHRM\Core\Controller\AbstractVueController;
 use OrangeHRM\Core\Vue\Component;
 use OrangeHRM\Core\Vue\Prop;
 use OrangeHRM\Entity\Holiday;
+use OrangeHRM\Entity\OperationalCountry;
 use OrangeHRM\Framework\Http\Request;
+use OrangeHRM\Core\Traits\ORM\EntityManagerTrait;
 use OrangeHRM\Core\Traits\Service\ConfigServiceTrait;
 
 class SaveHolidayController extends AbstractVueController
 {
     use ConfigServiceTrait;
+    use EntityManagerTrait;
 
     public const HOLIDAY_LENGTH_LIST = [
         ['id' => Holiday::HOLIDAY_HALF_DAY_LENGTH, 'label' => Holiday::HOLIDAY_HALF_DAY_LENGTH_NAME],
@@ -43,6 +46,15 @@ class SaveHolidayController extends AbstractVueController
             $component = new Component('holiday-save');
         }
         $component->addProp(new Prop('holiday-length-list', Prop::TYPE_ARRAY, self::HOLIDAY_LENGTH_LIST));
+        $countries = $this->getEntityManager()->getRepository(OperationalCountry::class)->findAll();
+        $countryOptions = [];
+        foreach ($countries as $country) {
+            $countryOptions[] = [
+                'id' => $country->getId(),
+                'label' => $country->getCountry()->getCountryName(),
+            ];
+        }
+        $component->addProp(new Prop('operational-countries', Prop::TYPE_ARRAY, $countryOptions));
         $this->setComponent($component);
     }
 }

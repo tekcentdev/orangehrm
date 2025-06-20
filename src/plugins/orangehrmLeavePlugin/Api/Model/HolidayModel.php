@@ -32,6 +32,12 @@ use OrangeHRM\Entity\Holiday;
  *     @OA\Property(property="recurring", type="boolean"),
  *     @OA\Property(property="length", type="string", enum={ 0, 4}),
  *     @OA\Property(property="lengthName", type="string", enum={ "Full Day", "Half Day"})
+ *     @OA\Property(
+ *         property="operationalCountry",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer"),
+ *         @OA\Property(property="name", type="string")
+ *     )
  * )
  */
 class HolidayModel implements Normalizable
@@ -49,6 +55,8 @@ class HolidayModel implements Normalizable
                 ['isRecurring'],
                 'length',
                 ['getDecorator', 'getLengthName'],
+                ['getOperationalCountry', 'getId'],
+                ['getOperationalCountry', 'getCountry', 'getCountryName'],
             ]
         );
         $this->setAttributeNames(
@@ -59,6 +67,8 @@ class HolidayModel implements Normalizable
                 'recurring',
                 'length',
                 'lengthName',
+                ['operationalCountry', 'id'],
+                ['operationalCountry', 'name'],
             ]
         );
     }

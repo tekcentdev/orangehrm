@@ -48,6 +48,14 @@
             </oxd-grid-item>
             <oxd-grid-item>
               <oxd-input-field
+                v-model="holiday.operationalCountry"
+                type="select"
+                :label="$t('general.location')"
+                :options="operationalCountries"
+              />
+            </oxd-grid-item>
+            <oxd-grid-item>
+              <oxd-input-field
                 v-model="holiday.length"
                 type="select"
                 :label="$t('leave.full_day_half_day')"
@@ -113,6 +121,7 @@ const holidayModel = {
   name: '',
   date: '',
   recurring: false,
+  operationalCountry: null,
   length: {id: 0, label: 'Full Day'},
 };
 
@@ -121,6 +130,10 @@ export default {
     holidayLengthList: {
       type: Array,
       required: true,
+    },
+    operationalCountries: {
+      type: Array,
+      default: () => [],
     },
   },
 
@@ -191,6 +204,7 @@ export default {
           date: this.holiday.date,
           recurring: this.holiday.recurring,
           length: this.holiday.length.id,
+          operationalCountryId: this.holiday.operationalCountry?.id,
         })
         .then(() => {
           return this.$toast.saveSuccess();

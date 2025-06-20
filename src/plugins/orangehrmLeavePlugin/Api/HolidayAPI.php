@@ -33,18 +33,22 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
 use OrangeHRM\Entity\Holiday;
+use OrangeHRM\Entity\OperationalCountry;
 use OrangeHRM\Leave\Api\Model\HolidayModel;
 use OrangeHRM\Leave\Dto\HolidaySearchFilterParams;
 use OrangeHRM\Leave\Traits\Service\HolidayServiceTrait;
+use OrangeHRM\Core\Traits\ORM\EntityManagerTrait;
 
 class HolidayAPI extends Endpoint implements CrudEndpoint
 {
     use HolidayServiceTrait;
+    use EntityManagerTrait;
 
     public const PARAMETER_NAME = 'name';
     public const PARAMETER_DATE = 'date';
     public const PARAMETER_RECURRING = 'recurring';
     public const PARAMETER_LENGTH = 'length';
+    public const PARAMETER_OPERATIONAL_COUNTRY_ID = 'operationalCountryId';
 
     public const FILTER_FROM_DATE = 'fromDate';
     public const FILTER_TO_DATE = 'toDate';
@@ -208,6 +212,7 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
      *                 maxLength=OrangeHRM\Leave\Api\HolidayAPI::PARAM_RULE_NAME_MAX_LENGTH
      *             ),
      *             @OA\Property(property="recurring", type="boolean"),
+     *             @OA\Property(property="operationalCountryId", type="integer"),
      *             required={"name", "date"}
      *         )
      *     ),
@@ -246,6 +251,19 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
             $this->getRequestParams()->getBoolean(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_RECURRING)
         );
         $holiday->setLength($this->getRequestParams()->getInt(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_LENGTH));
+
+        $opCountryId = $this->getRequestParams()->getIntOrNull(
+            RequestParams::PARAM_TYPE_BODY,
+            self::PARAMETER_OPERATIONAL_COUNTRY_ID
+        );
+        if (!is_null($opCountryId)) {
+            $operationalCountry = $this->getEntityManager()
+                ->getRepository(OperationalCountry::class)
+                ->find($opCountryId);
+            $holiday->setOperationalCountry($operationalCountry);
+        } else {
+            $holiday->setOperationalCountry(null);
+        }
     }
 
     /**
@@ -280,6 +298,9 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
                 self::PARAMETER_LENGTH,
                 new Rule(Rules::IN, [array_keys(Holiday::HOLIDAY_LENGTH_MAP)])
             ),
+            $this->getValidationDecorator()->notRequiredParamRule(
+                new ParamRule(self::PARAMETER_OPERATIONAL_COUNTRY_ID, new Rule(Rules::POSITIVE))
+            )
         );
     }
 
@@ -305,6 +326,7 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
      *             ),
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="recurring", type="boolean"),
+     *             @OA\Property(property="operationalCountryId", type="integer"),
      *         )
      *     ),
      *     @OA\Response(response="200",
