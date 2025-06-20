@@ -97,15 +97,31 @@ class HolidayDao extends BaseDao
      * @param DateTime $date
      * @return Holiday|null
      */
-    public function getHolidayByDate(DateTime $date): ?Holiday
+    public function getHolidayByDate(DateTime $date, ?int $operationalCountryId = null): ?Holiday
     {
         $q = $this->createQueryBuilder(Holiday::class, 'holiday');
-        $q->andWhere($q->expr()->eq($q->expr()->substring('holiday.date', 6), ':datePortion'))
-            ->setParameter('datePortion', $date->format('m') . '-' . $date->format('d'));
-        $q->andWhere('holiday.recurring = :recurring')
-            ->setParameter('recurring', true);
-        $q->orWhere('holiday.date = :date')
+        $q->andWhere(
+            $q->expr()->orX(
+                $q->expr()->andX(
+                    $q->expr()->eq($q->expr()->substring('holiday.date', 6), ':datePortion'),
+                    $q->expr()->eq('holiday.recurring', ':recurring')
+                ),
+                $q->expr()->eq('holiday.date', ':date')
+            )
+        )
+            ->setParameter('datePortion', $date->format('m') . '-' . $date->format('d'))
+            ->setParameter('recurring', true)
             ->setParameter('date', $date);
+
+        if (!is_null($operationalCountryId)) {
+            $q->andWhere(
+                $q->expr()->orX(
+                    $q->expr()->isNull('holiday.operationalCountry'),
+                    $q->expr()->eq('IDENTITY(holiday.operationalCountry)', ':opCountry')
+                )
+            )
+                ->setParameter('opCountry', $operationalCountryId);
+        }
 
         return $this->fetchOne($q);
     }

@@ -21,8 +21,10 @@ namespace OrangeHRM\Leave\WorkSchedule;
 use DateTime;
 use OrangeHRM\Admin\Dto\WorkShiftStartAndEndTime;
 use OrangeHRM\Admin\Service\WorkShiftService;
+use OrangeHRM\Core\Traits\ORM\EntityManagerTrait;
 use OrangeHRM\Core\Traits\Service\ConfigServiceTrait;
 use OrangeHRM\Entity\EmployeeWorkShift;
+use OrangeHRM\Entity\OperationalCountry;
 use OrangeHRM\Leave\Traits\Service\HolidayServiceTrait;
 use OrangeHRM\Leave\Traits\Service\WorkWeekServiceTrait;
 use OrangeHRM\Pim\Traits\Service\EmployeeServiceTrait;
@@ -33,6 +35,7 @@ class BasicWorkSchedule implements WorkScheduleInterface
     use WorkWeekServiceTrait;
     use HolidayServiceTrait;
     use ConfigServiceTrait;
+    use EntityManagerTrait;
 
     /**
      * @var int|null
@@ -105,6 +108,31 @@ class BasicWorkSchedule implements WorkScheduleInterface
     }
 
     /**
+     * Get operational country id for current employee
+     *
+     * @return int|null
+     */
+    protected function getOperationalCountryId(): ?int
+    {
+        if (is_null($this->empNumber)) {
+            return null;
+        }
+
+        $employee = $this->getEmployeeService()->getEmployeeByEmpNumber($this->empNumber);
+        foreach ($employee->getLocations() as $location) {
+            $country = $location->getCountry();
+            $operationalCountry = $this->getEntityManager()
+                ->getRepository(OperationalCountry::class)
+                ->findOneBy(['country' => $country]);
+            if ($operationalCountry instanceof OperationalCountry) {
+                return $operationalCountry->getId();
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @inheritDoc
      */
     public function isNonWorkingDay(DateTime $day, bool $fullDay): bool
@@ -117,7 +145,7 @@ class BasicWorkSchedule implements WorkScheduleInterface
      */
     public function isHalfDay(DateTime $day): bool
     {
-        return $this->getHolidayService()->isHalfDay($day);
+        return $this->getHolidayService()->isHalfDay($day, $this->getOperationalCountryId());
     }
 
     /**
@@ -125,7 +153,7 @@ class BasicWorkSchedule implements WorkScheduleInterface
      */
     public function isHoliday(DateTime $day): bool
     {
-        return $this->getHolidayService()->isHoliday($day);
+        return $this->getHolidayService()->isHoliday($day, $this->getOperationalCountryId());
     }
 
     /**
@@ -133,6 +161,6 @@ class BasicWorkSchedule implements WorkScheduleInterface
      */
     public function isHalfDayHoliday(DateTime $day): bool
     {
-        return $this->getHolidayService()->isHalfDayHoliday($day);
+        return $this->getHolidayService()->isHalfDayHoliday($day, $this->getOperationalCountryId());
     }
 }
