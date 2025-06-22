@@ -169,8 +169,19 @@ def buildYarnProject(projectDir) {
             if [ ! -f yarn.lock ] || [ ! -f package.json ]; then
                 echo "❌ yarn.lock or package.json not found!"
                 exit 1
-            fi            
+            fi
 
+            echo "🧰 Enabling Corepack and preparing Yarn..."
+            corepack enable && echo "[✅] Corepack enabled" >> corepack.log || echo "[❌] Corepack enable failed" >> corepack.log
+
+            corepack prepare yarn@4.1.0 --activate && echo "[✅] Yarn 4.1.0 prepared" >> corepack.log || echo "[❌] Yarn prepare failed" >> corepack.log
+
+            echo "🧪 Verifying Yarn..."
+            yarn --version >> corepack.log 2>&1 || echo "[❌] Yarn not available" >> corepack.log
+
+            echo "📄 Corepack log content:"
+            cat corepack.log
+            
             echo "🔄 Running yarn install --immutable"
             yarn install --immutable || {
                 echo "⚠️ yarn install --immutable failed, retrying with regular yarn install"
