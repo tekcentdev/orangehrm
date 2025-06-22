@@ -6,6 +6,9 @@ pipeline {
         DEPLOY_PATH = '/var/www/html/orangehrm' // Default fallback
     }
 
+    // Reusable shared function for Yarn builds
+    tools { nodejs 'node-18' }
+
     stages {
         stage('Checkout Code') {
             steps {
@@ -56,68 +59,15 @@ pipeline {
             parallel {
                 stage('Frontend') {
                     steps {
-                        dir('src/client') {
-                            echo '⚙️ Building frontend (src/client)...'
-                            sh '''
-                                set -e
-
-                                echo "🔧 Node: $(node -v)"
-                                # Clean potentially dirty workspace
-                                rm -rf node_modules .yarn
-
-                                if [ ! -f yarn.lock ] || [ ! -f package.json ]; then
-                                    echo "❌ yarn.lock or package.json not found!"
-                                    exit 1
-                                fi
-
-                                if [ ! -f node_modules/.bin/yarn ]; then
-                                    echo "Installing yarn locally..."
-                                    npm install yarn
-                                fi
-
-                                echo "🔄 Running yarn install --immutable"
-                                npx yarn install --immutable || {
-                                    echo "⚠️ yarn install --immutable failed, retrying with regular yarn install (first-time build or sync issue?)"
-                                    npx yarn install || { echo "❌ yarn install failed"; exit 1; }
-                                }
-
-                                npx yarn build || { echo "❌ yarn build failed"; exit 1; }
-
-                                ls -lh dist || ls -lh build || ls -lh .next || ls -lh ../../web/dist || echo "❌ No build output"
-                            '''
+                        script {
+                            buildYarnProject('src/client')
                         }
                     }
                 }
                 stage('Installer') {
                     steps {
-                        dir('installer/client') {
-                            echo '⚙️ Building installer (installer/client)...'
-                            sh '''
-                                set -e
-
-                                echo "🔧 Node: $(node -v)"
-                                rm -rf node_modules .yarn
-
-                                if [ ! -f yarn.lock ] || [ ! -f package.json ]; then
-                                    echo "❌ yarn.lock or package.json not found!"
-                                    exit 1
-                                fi
-
-                                if [ ! -f node_modules/.bin/yarn ]; then
-                                    echo "Installing yarn locally..."
-                                    npm install yarn
-                                fi
-
-                                echo "🔄 Running yarn install --immutable"
-                                npx yarn install --immutable || {
-                                    echo "⚠️ yarn install --immutable failed, retrying with regular yarn install (first-time build or sync issue?)"
-                                    npx yarn install || { echo "❌ yarn install failed"; exit 1; }
-                                }
-
-                                npx yarn build || { echo "❌ yarn build failed"; exit 1; }
-
-                                ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
-                            '''
+                        script {
+                            buildYarnProject('installer/client')
                         }
                     }
                 }
@@ -200,5 +150,43 @@ pipeline {
                 }
             }
         }
+    }
+
+    // Reusable build function outside stages block
+    post {
+        always {
+            echo "🧼 Build complete for branch: ${env.BRANCH_NAME}, build #${env.BUILD_NUMBER}"
+        }
+    }
+}
+
+def buildYarnProject(projectDir) {
+    dir(projectDir) {
+        echo "⚙️ Building Yarn project in ${projectDir}..."
+
+        sh '''
+            set -e
+            echo "🔧 Node: $(node -v)"
+            rm -rf node_modules .yarn
+
+            if [ ! -f yarn.lock ] || [ ! -f package.json ]; then
+                echo "❌ yarn.lock or package.json not found!"
+                exit 1
+            fi
+
+            echo "🧰 Enabling Corepack for Yarn..."
+            corepack enable
+            corepack prepare yarn@4.1.0 --activate
+
+            echo "🔄 Running yarn install --immutable"
+            yarn install --immutable || {
+                echo "⚠️ yarn install --immutable failed, retrying with regular yarn install"
+                yarn install || { echo "❌ yarn install failed"; exit 1; }
+            }
+
+            yarn build || { echo "❌ yarn build failed"; exit 1; }
+
+            ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
+        '''
     }
 }
