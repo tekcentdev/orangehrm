@@ -6,9 +6,6 @@ pipeline {
         DEPLOY_PATH = '/var/www/html/orangehrm' // Default fallback
     }
 
-    // Reusable shared function for Yarn builds
-    tools { nodejs 'node-18' }
-
     stages {
         stage('Checkout Code') {
             steps {
