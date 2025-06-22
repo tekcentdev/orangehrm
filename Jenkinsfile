@@ -163,6 +163,11 @@ def buildYarnProject(projectDir) {
 
         sh '''
             set -e
+
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 18
+
             echo "🔧 Node: $(node -v)"
             rm -rf node_modules .yarn
 
@@ -173,7 +178,6 @@ def buildYarnProject(projectDir) {
 
             echo "🧰 Enabling Corepack and preparing Yarn..."
             corepack enable && echo "[✅] Corepack enabled" >> corepack.log || echo "[❌] Corepack enable failed" >> corepack.log
-
             corepack prepare yarn@4.1.0 --activate && echo "[✅] Yarn 4.1.0 prepared" >> corepack.log || echo "[❌] Yarn prepare failed" >> corepack.log
 
             echo "🧪 Verifying Yarn..."
@@ -181,7 +185,7 @@ def buildYarnProject(projectDir) {
 
             echo "📄 Corepack log content:"
             cat corepack.log
-            
+
             echo "🔄 Running yarn install --immutable"
             yarn install --immutable || {
                 echo "⚠️ yarn install --immutable failed, retrying with regular yarn install"
