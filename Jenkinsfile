@@ -165,8 +165,8 @@ def buildYarnProject(projectDir) {
             set -e
 
             export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-            nvm use 18            
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            nvm use 18        
 
             echo "🔧 Node: $(node -v)"
             rm -rf node_modules .yarn
