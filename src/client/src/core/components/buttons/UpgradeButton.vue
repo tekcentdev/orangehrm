@@ -18,27 +18,7 @@
  -->
 
 <template>
-  <!--<div class="orangehrm-upgrade-container">
-    <a
-      class="orangehrm-upgrade-link"
-      target="_blank"
-      href="https://orangehrm.com/open-source/upgrade-to-advanced"
-    >
-      <oxd-glass-button
-        :label="$t('general.upgrade')"
-        size="large"
-        class="orangehrm-upgrade-button"
-      >
-        <template #icon>
-          <oxd-icon
-            type="svg"
-            name="upgrade"
-            class="orangehrm-upgrade-icon"
-          ></oxd-icon>
-        </template>
-      </oxd-glass-button>
-    </a>
-  </div>-->
+  <div style="display: none"></div>
 </template>
 
 <script>
