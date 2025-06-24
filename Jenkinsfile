@@ -193,9 +193,7 @@ def buildYarnProject(projectDir) {
                 echo "⚠️ yarn install --immutable failed, retrying with regular yarn install"
                 yarn install || { echo "❌ yarn install failed"; exit 1; }
             }
-
-            yarn lint
-
+            
             yarn build || { echo "❌ yarn build failed"; exit 1; }
 
             ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"

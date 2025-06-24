@@ -22,14 +22,8 @@
 </template>
 
 <script>
-import {OxdGlassButton, OxdIcon} from '@ohrm/oxd';
-
 export default {
   name: 'UpgradeButton',
-  components: {
-    'oxd-icon': OxdIcon,
-    'oxd-glass-button': OxdGlassButton,
-  },
 };
 </script>
 
