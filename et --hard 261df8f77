@@ -1,0 +1,247 @@
+[33m1e1bd2d0a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mcodex/extend-holiday-function-to-support-locations[m[33m, [m[1;31morigin/codex/extend-holiday-function-to-support-locations[m[33m)[m fix
+[33m8802539b1[m fix
+[33m7c2a7644c[m fix
+[33me0cb91c50[m fix
+[33mc307e27b8[m write log file
+[33m5d6c67733[m Re-add yarn 4.1.0 runtime file
+[33m489c51578[m Re-add yarn 4.1.0 runtime file
+[33me8b471c29[m remove corepack
+[33m261df8f77[m fix build error
+[33ma04e220b5[m fix build error
+[33m566030d55[m update deploy scipt
+[33me9d8228bd[m allow codex branches to be deployed to test env
+[33m2aef58d47[m Add location support to holiday API
+[33m368682091[m[33m ([m[1;31morigin/dev/5.7-custom[m[33m)[m write version number
+[33med5d88408[m add fast-uri
+[33m5d117dd9c[m exclude files
+[33m62d57610f[m update package
+[33m164a3db48[m update package
+[33md740ae306[m Add firebase/php-jwt
+[33m2930f12e4[m make build stage parallel
+[33m72d2065e8[m update
+[33m73b6ca6f0[m update
+[33me71edb4f6[m update
+[33me748b80ee[m update
+[33me4dcad989[m update
+[33mbb8f32130[m update
+[33mb29f91470[m updates
+[33ma40fb2e00[m update again
+[33ma75edcbd8[m updated
+[33m45b8a7b87[m update
+[33md413e4530[m update
+[33mca466ebe6[m fix
+[33maf60941e6[m fix
+[33m944dc1938[m updated
+[33md04043603[m update paths
+[33m80c903cba[m update
+[33m44c3b258a[m update deploy script
+[33m8b409f741[m update pem path
+[33m37a18beef[m deploy certs
+[33ma58aa9bb1[m update
+[33m79399f900[m update again
+[33m46cee0d2f[m update deploy script
+[33m081ccfbed[m update session name
+[33mf24dbbc2a[m dont set permissions
+[33m2d49f8998[m write env file
+[33m4f5d5d81c[m fix
+[33m959c3fa74[m fix
+[33m749969f09[m fix
+[33m37a7df88a[m fix
+[33mbcb2f7697[m fix
+[33m7dc93e794[m fix
+[33m58c929636[m fix
+[33mb70c89f56[m fix
+[33ma638a87fc[m fix
+[33m9faf19ec0[m dont detect changes anymore and build always
+[33m02b1e5e04[m fix
+[33m786ce0305[m fix
+[33mf9427a2c1[m fix
+[33m1a99c5396[m fix
+[33m874c3b2fe[m fix
+[33m194555e0b[m fix
+[33m7bb27bddd[m fix
+[33mccd80367b[m more logging
+[33me73a428d8[m adding logging
+[33mc3b1db753[m update build script
+[33m8d48fd793[m build installer
+[33m656fc53a8[m dont try to set permissions
+[33m12e355c01[m no times
+[33me3085e5a0[m speed up build step
+[33m98f26706b[m update deploy code
+[33m8e7be90db[m update deploy code
+[33m2569c5d72[m update the jenkinsfile
+[33m0c52f9b1f[m environment setup
+[33m6dad38c89[m clean up
+[33m03ea6dfa3[m update path
+[33m64a51c07f[m use nvm
+[33m12e65ea4d[m update path
+[33m6009ce037[m use specific build agent
+[33m14daaaad7[m skip compare as its an external library
+[33m9eb43c02c[m add jenkins file
+[33m678779f24[m Customise the login process to use Clouflare Zero trust
+[33m194a751e2[m[33m ([m[1;33mtag: [m[1;33mv5.7[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;31morigin/5.7[m[33m, [m[1;32mmain[m[33m)[m OHRM5X-2584: Update Dockerfile for OrangeHRM 5.7 (#1862)
+[33ma819c179f[m OHRM5X-2570: Fix build - add version validation (#1860)
+[33m9adc2a5f4[m OHRM5X-2480: Develop admin - language package validation (#1835)
+[33m5e6c96d4a[m OHRM5X-2522: Fix pay grade - invalid parameter (#1854)
+[33ma8c49de91[m OHRM5X-736: Fix API defects (#1852)
+[33m06767831f[m OHRM5X-2559: Fix upgrader - 4.3.3 migration failure (#1846)
+[33md6f5ef32b[m OHRM5X-2496: Develop admin - disable Buzz module (#1847)
+[33me91964aa1[m OHRM5X-2561: Fix build failure (#1840)
+[33m0fa64dc4f[m OHRM5X-2484: Develop admin - add getOne/delete to langauge API  (#1812)
+[33m74e9f307c[m[33m ([m[1;33mtag: [m[1;33mv5.6.1[m[33m, [m[1;31morigin/5.6.1[m[33m)[m OHRM5X-2541: Update Dockerfile for OrangeHRM 5.6.1 (#1830)
+[33m0a25d1e79[m OHRM5X-2547: Bump MySQL, MariaDB supported versions (#1828)
+[33m147b520e1[m OHRM5X-2539: Update Changelog (#1826)
+[33m861f807a0[m OHRM5X-2418: Bump Dockerfile PHP image (#1824)
+[33me59169b13[m OHRM5X-2501: Fix theme - sanitize SVG uploads (#1823)
+[33m6b2fbc6d9[m OHRM5X-2497: Fix installer - handle PHP timeout (#1822)
+[33m39264f876[m OHRM5X-2335: Support ONLY_FULL_GROUP_BY (#1818)
+[33m65cbabb9f[m OHRM5X-2488: Fix installer - add password strength validation to CLI (#1813)
+[33m302891943[m OHRM5X-2486: Bump FE testing libraries to latest major version (#1811)
+[33m0c8f13a56[m OHRM5X-2486: Bump FE libraries to latest minor version (#1807)
+[33m67ca13f8d[m OHRM5X-2485: Bump BE libraries to latest minor version (#1805)
+[33mb9a9f1103[m[33m ([m[1;33mtag: [m[1;33mv5.6[m[33m, [m[1;31morigin/5.6[m[33m)[m OHRM5X-2453: Update Dockerfile for OrangeHRM 5.6 (#1795)
+[33m14b4aebbc[m OHRM5X-2451: Fix redirect to module controller issue when session timeout (#1793)
+[33m80c943f06[m OHRM5X-2466: Bump scheduled tests PHP, MySQL, MariaDB versions (#1792)
+[33mf78515b76[m OHRM5X-2466: Bump scheduled tests PHP, MySQL, MariaDB versions (#1791)
+[33mac926aefa[m OHRM5X-2317: Write api doc - add descriptions to PIM (#1749)
+[33meb1965f1c[m OHRM5X-2456: Fix installer - non-privilege user issue (#1790)
+[33m69d6f3a80[m OHRM5X-2318: Fix email notification delay when action performed from mobile (#1788)
+[33m97772dc8e[m OHRM5X-2407: Develop OpenID - authentication flow (#1777)
+[33m264834c05[m OHRM5X-2420: Fix MariaDB installer failure in 5.3 migration (#1784)
+[33m76fbbfd4d[m OHRM5X-2435: Upgrade product license to GPLv3 license (#1782)
+[33m0b193741e[m OHRM5X-2399: Develop OpenID - provider screens (#1743)
+[33maf66498a3[m OHRM5X-2405: Develop OpenID -  auth providers API (#1775)
+[33m996dabde3[m OHRM5X-2294: Fix installer - installer failure on MariaDB (#1736)
+[33m34c1ea73a[m OHRM5X-2281: Write api doc - adding operationId and summary (#1732)
+[33m742747a2f[m OHRM5X-1948: Refactor installer - LangStringHelper and TranslationHelper (#1588)
+[33mf236add57[m OHRM5X-2088: Refactor admin - unique FE validation to BE validation (#1723)
+[33ma1f55d83e[m OHRM5X-2273: Fix installer - prevent next button showing early (#1721)
+[33m08f076d65[m OHRM5X-2187: Write pim - API doc with OpenAPI (#1728)
+[33m3709fdfb1[m OHRM5X-2190: Write admin, leave, recruitment - API doc with OpenAPI (#1725)
+[33mb26e090cb[m OHRM5X-2140: Handle pim - employee picture caching (#1674)
+[33m15a58279b[m OHRM5X-2277: Fix github scheduled test failure (#1722)
+[33m6dd195ad1[m[33m ([m[1;33mtag: [m[1;33mv5.5[m[33m, [m[1;31morigin/5.5[m[33m)[m OHRM5X-2260: Update Dockerfile for OrangeHRM 5.5 (#1715)
+[33m84ba8a215[m OHRM5X-2265: Fix dashboard - subunit pie chart issue on PHP 8.2 (#1714)
+[33m2877f3c94[m OHRM5X-2174: Fix password policy minimum character validation issue (#1712)
+[33m341335efc[m OHRM5X-2258: Bump OXD version to 2.0.1 (#1711)
+[33m8741daa19[m OHRM5X-2256: Fix recruitment - candidate list status localization (#1710)
+[33mfad3400db[m OHRM5X-2218: Add claim - entity tests (#1706)
+[33m3c39f52c0[m OHRM5X-2166: Complete oauth unit tests (#1683)
+[33m713c5aa3b[m OHRM5X-2225: Fix candidate page is throwing error after delete hiring manager (#1708)
+[33mdefea964e[m OHRM5X-2219: Add claim - include employee filter to employee claims (#1705)
+[33m8f433d30a[m OHRM5X-2228: Fix pim - job contract broken issue (#1699)
+[33m9025ac08f[m OHRM5X-2202: Bump oxd version to 2.0.1-alpha.1 (#1702)
+[33m73f0cb5d6[m OHRM5X-2222: Fix claim - related issues (#1701)
+[33m07a4dd335[m OHRM5X-2177: Add claim module to admin module configurations (#1693)
+[33m9aa281d3c[m OHRM5X-2197: Fix claim - related issues (#1692)
+[33m8854dae09[m OHRM5X-2053: Develop claim - employee claim screen (#1690)
+[33me19e1ed9e[m OHRM5X-2191: Add API docs for attendance and dashboard (#1691)
+[33mdb31fe22d[m OHRM5X-2031: Fix claim - upgrade from 4.x issue (#1685)
+[33m144c18687[m OHRM5X-2097: Develop claim - attachment download controller (#1668)
+[33m27a3f29a1[m OHRM5X-2056: Develop claim - my claim screen (#1667)
+[33m71c6fa540[m OHRM5X-2049: Develop claim - detailed request screen (#1663)
+[33md6052053e[m OHRM5X-2167: Complete leave - employee leave balance API testing (#1678)
+[33m5fcab2466[m OHRM5X-2049: Develop claim - submit claim screen  (#1659)
+[33m67b80d1b8[m OHRM5X-1959: Develop claim - request API getAll operation (#1656)
+[33m2a34d45c3[m OHRM5X-2117: Bump OrangeHRM version to 5.5
+[33m92a92678d[m Revert "OHRM5X-2117: Exclude claim module from v5.4 (#1661)"
+[33mde4c404b4[m[33m ([m[1;31morigin/5.4[m[33m)[m OHRM5X-2153: Update Dockerfile for OrangeHRM 5.4 (#1680)
+[33m68d95016e[m[33m ([m[1;33mtag: [m[1;33mv5.4[m[33m)[m OHRM5X-2163: Fix dashboard - employee time at work API invalid result issue (#1677)
+[33mecbc73181[m OHRM5X-2102: Improve auth - password enforcement validation (#1675)
+[33me6efec56c[m OHRM5X-2144: Add employee leave balances API doc (#1672)
+[33m2f5a7b5bf[m OHRM5X-2146: Add date range filter to my attendance record API (#1669)
+[33m9c48bd0d5[m OHRM5X-2141: Develop leave - employee leave API (#1658)
+[33m3b5b24ef4[m OHRM5X-2144: Develop leave - employee leave balance API (#1666)
+[33m7b486efca[m OHRM5X-2117: Exclude claim module from v5.4 (#1661)
+[33me4b6363e8[m OHRM5X-2120: Add pim - summary model to MyInfoAPI (#1657)
+[33medb1ec081[m OHRM5X-2118: Add leave - new summary model to leave-entitlements API (#1654)
+[33mf33a0925d[m OHRM5X-1954: Develop claim - request action API (#1652)
+[33ma706c3a83[m OHRM5X-2112: Enable/disable admin - mobile app access as a module (#1649)
+[33m97adf5dd0[m OHRM5X-2117: Move claim migrations to 5.5 (#1650)
+[33mcfe6423d6[m OHRM5X-1953: Improve claim - workflow support for APIs  (#1646)
+[33me4c8d54f9[m OHRM5X-2109: Change admin - enabled modules API read permission (#1645)
+[33mb9f1d9bbc[m OHRM5X-2116: Develop leave - request getOne operation (#1647)
+[33m0c1241b32[m OHRM5X-2048: Develop claim - submit claim screen (#1643)
+[33m194a51291[m OHRM5X-2071: Refactor use in-memory session storage for token based clients (#1644)
+[33m1238a6050[m OHRM5X-2085: Handle claim - workflow states for attachment API (#1637)
+[33m93979c709[m OHRM5X-2066: Develop oauth - consent screen (#1641)
+[33mfc381b4c2[m OHRM5X-2106: Hash oauth - client secret (#1639)
+[33ma3f441fda[m OHRM5X-2084: Develop claim - request attachment API (#1630)
+[33m77dbb88ec[m OHRM5X-1936: Enable oauth - refresh token grant type (#1636)
+[33m295452968[m OHRM5X-2069: Develop oauth - register OAuth 2 clients (#1633)
+[33m352c22c91[m OHRM5X-2090: Add  admin - unit id to organization structure API (#1631)
+[33me6fcfee6f[m OHRM5X-885: Improve pim - report validation when creating a report (#1629)
+[33m6833af2d3[m OHRM5X-2065:  Develop oauth - authorization code endpoint (#1632)
+[33m0dee7c77d[m OHRM5X-1935: Add oauth - entity classes & repositories (#1627)
+[33m7cf3aa697[m OHRM5X-2076: Develop claim - expense API (#1625)
+[33mcc7e14a00[m OHRM5X-1887: Fix buzz like animation issue (#1626)
+[33m98b03d1e7[m OHRM5X-1938: Develop core - public API to get REST API version (#1623)
+[33m3cc66e8d3[m OHRM5X-1393: Add corporate directory - vCard support (#1624)
+[33mb893c7cce[m OHRM5X-2039: Add help - unit tests (#1620)
+[33m2a77f1f29[m OHRM5X-2042: Enforce auth - password strength in the login (#1615)
+[33mc2226a230[m OHRM5X-2062: Add tooltip to menu help icon (#1618)
+[33m3e828c3d2[m OHRM5X-2063: Add claim - configurations menu items (#1617)
+[33m686036acc[m OHRM5X-797: Add help icon to app layout (#1609)
+[33m260ddb1ad[m OHRM5X-2045: Develop claim - expense type screens (#1612)
+[33m74c97f95d[m OHRM5X-2039: Initiate help plugin (#1613)
+[33m6af9cbffd[m OHRM5X-2041: Add auth - enforce weak password screen (#1610)
+[33m9e5dc6a3e[m OHRM5X-2034: Check auth - minimum required level of password strength (#1608)
+[33mfe03835ea[m OHRM5X-1988: Bump core - oxd dependency to v2 (#1602)
+[33m4c5e65616[m OHRM5X-1943: Develop claim - expense type API (#1607)
+[33m630350d4d[m OHRM5X-1993: Define password policies and required strength (#1604)
+[33m3a0eed5e9[m OHRM5X-2001: Make claim - event name non editable (#1606)
+[33m0cea39814[m OHRM5X-2001: Develop claim - event list screen (#1605)
+[33m12e094d3b[m OHRM5X-1940: Refactor claim - event API (#1600)
+[33mcad5fe138[m OHRM5X-1947: Develop claim - request API create operation (#1599)
+[33m4b953a1cc[m OHRM5X-1942: Develop claim - expense type API create operation (#1598)
+[33mdabac9eaa[m OHRM5X-1932: Refactor claim - event API (#1594)
+[33m0b5bf294a[m OHRM5X-1931: Develop claim - events API (#1587)
+[33m3826a3136[m OHRM5X-1928: Upgrade app vue dependencies (#1586)
+[33mb34fc123a[m[33m ([m[1;31morigin/5.3[m[33m)[m OHRM5X-1896: Update Dockerfile for OrangeHRM 5.3 (#1581)
+[33mc143b2f95[m[33m ([m[1;33mtag: [m[1;33mv5.3[m[33m)[m OHRM5X-1907: Improve system check screen error handling (#1580)
+[33m58b9a8ec8[m OHRM5X-1906: support buzz - latest post widget line breaks (#1576)
+[33m29210d18e[m OHRM5X-1828: Test buzz - comment API getAll, update, delete operations (#1572)
+[33m7e84c90b9[m OHRM5X-1905: Fix buzz - adjust like comment counts after deleting employees (#1578)
+[33mbc14656c5[m OHRM5X-1907: Initiate system check screen (#1577)
+[33m50e337a33[m OHRM5X-1898: Update installer/upgrader notice (#1573)
+[33m575c7ade9[m OHRM5X-1856: Initiate CLI installer (#1575)
+[33mb2721546d[m OHRM5X-1880: Develop maintenance - employee access buzz data (#1564)
+[33m330f68ecd[m OHRM5X-1857: Initiate CLI upgrader (#1571)
+[33me130e378d[m OHRM5X-1892: Develop dashboard - buzz latest posts widget (#1570)
+[33mef7c13236[m OHRM5X-1866: Change buzz - layout to better support high resolutions  (#1569)
+[33m0a93cdc75[m OHRM5X-1827: Develop buzz - comments API getOne operation (#1568)
+[33m3b18b1268[m OHRM5X-1884: Update buzz - post stats when adding/deleting comments (#1566)
+[33m369636903[m OHRM5X-1843: Develop buzz - edit post/share modal (#1565)
+[33m26de921b6[m OHRM5X-1830: Develop buzz - share API update operation (#1563)
+[33m4325f8122[m OHRM5X-1823: Develop buzz - post shares API (#1560)
+[33m34202e0cf[m OHRM5X-1814: Develop buzz - post API update operation (#1556)
+[33m07d9d9244[m OHRM5X-1874: Remove buzz - share count from shared posts (#1558)
+[33m51e68e604[m OHRM5X-1863: Add buzz - newsfeed swipe gesture (#1550)
+[33m88f268fd4[m OHRM5X-1868: Handle buzz - post, share, comments multibyte characters (#1557)
+[33mdd8802ccd[m OHRM5X-1831: Develop buzz - share API delete operation (#1555)
+[33m83ea0a14d[m OHRM5X-1861: Fix response blocking at auth/validate (#1554)
+[33md529c56bd[m OHRM5X-1858: Check database prerequisites in installer (#1552)
+[33mf0798f366[m OHRM5X-1807: Revert introduced experimental var directory
+[33mf9bf97f0c[m OHRM5X-1805: Generate doctrine proxy classes (#1514)
+[33me7034254b[m OHRM5X-1807: Define one writable directory for the application (#1512)
+[33mc5cb21ffa[m OHRM5X-1825: Add buzz - comment API post operation testing (#1551)
+[33m418194b84[m OHRM5X-1845: Fix buzz - module related issues (#1549)
+[33mcfc8d13bc[m OHRM5X-1829: Add buzz - share API testing & doc (#1548)
+[33mbe3122ff5[m OHRM5X-1824: Develop buzz - comment API get operation (#1547)
+[33m5d8569651[m OHRM5X-1803: Fix buzz - module related issues (#1546)
+[33m0fb561406[m OHRM5X-1817: Develop buzz - validate video URL & generate embedded URL (#1541)
+[33mc0adb913a[m OHRM5X-1819: Handle buzz - photo controller caching (#1545)
+[33m7e510a456[m OHRM5X-1846: Develop buzz - likes on comment API (#1540)
+[33m69ef19d18[m OHRM5X-1741: Develop buzz - post comment component (#1538)
+[33mf3bf7992f[m OHRM5X-1820: Develop buzz - likes on share API (#1537)
+[33mee5e6be62[m OHRM5X-1738: Develop buzz - shared post content (#1534)
+[33m19a4737c9[m OHRM5X-1825: Initiate buzz - comment API (#1535)
+[33m97ba06a44[m OHRM5X-1829: Initiate buzz - share a post API (#1533)
+[33md84adbe36[m OHRM5X-1813: Develop buzz - post API (#1532)
+[33m7d78daa9c[m OHRM5X-1812: Add buzz - feed API doc (#1530)
+[33mcdedda5d0[m OHRM5X-1740: Develop buzz - photo carousel component (#1524)
+[33m9166721a8[m OHRM5X-1838: Convert buzz - times to UTC times (#1528)
+[33m594ec8529[m OHRM5X-1819: Initiate buzz - photo controller (#1525)
+[33m8266e828f[m OHRM5X-1813: Develop buzz - create post API (#1526)
+[33mfabe6ff02[m OHRM5X-1812: Initiate buzz - feed API (#1520)
+[33m8486a42f0[m OHRM5X-1766: Improve doctrine connection for the application (#1506)
