@@ -17,7 +17,7 @@ pipeline {
             steps {
                 script {
                     def deployPath = ''
-                    if (env.BRANCH_NAME ==~ /^dev\/.*/ || env.BRANCH_NAME ==~ /^feature\/.*/) {
+                    if (env.BRANCH_NAME ==~ /^dev\/.*/ || env.BRANCH_NAME ==~ /^feature\/.*/ || env.BRANCH_NAME ==~ /^codex\/.*/) {
                         deployPath = '/var/www/html/orangehrm/test'
                     } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME ==~ /^release\/.*/) {
                         deployPath = '/var/www/html/orangehrm/prod'
@@ -56,43 +56,15 @@ pipeline {
             parallel {
                 stage('Frontend') {
                     steps {
-                        dir('src/client') {
-                            echo '⚙️ Building frontend (src/client)...'
-                            sh '''
-                                set -e
-
-                                echo "🔧 Node: $(node -v)"
-                                if [ ! -f node_modules/.bin/yarn ]; then
-                                    echo "Installing yarn locally..."
-                                    npm install yarn
-                                fi
-
-                                npx yarn install --immutable
-                                npx yarn build || { echo "❌ yarn build failed"; exit 1; }
-
-                                ls -lh dist || ls -lh build || ls -lh .next || ls -lh ../../web/dist || echo "❌ No build output"
-                            '''
+                        script {
+                            buildYarnProject('src/client')
                         }
                     }
                 }
                 stage('Installer') {
                     steps {
-                        dir('installer/client') {
-                            echo '⚙️ Building installer (installer/client)...'
-                            sh '''
-                                set -e
-
-                                echo "🔧 Node: $(node -v)"
-                                if [ ! -f node_modules/.bin/yarn ]; then
-                                    echo "Installing yarn locally..."
-                                    npm install yarn
-                                fi
-
-                                npx yarn install --immutable
-                                npx yarn build || { echo "❌ yarn build failed"; exit 1; }
-
-                                ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
-                            '''
+                        script {
+                            buildYarnProject('installer/client')
                         }
                     }
                 }
@@ -135,13 +107,13 @@ pipeline {
 
                     withCredentials(envCredentials) {
                         def envContent = """
-                        OHRM_DB_HOST=${DB_HOST}
-                        OHRM_DB_USER=${DB_USER}
-                        OHRM_DB_PASS=${DB_PASS}
-                        OHRM_DB_NAME=${DB_NAME}
-                        OHRM_SESSION_NAME=orangehrm
-                        CF_LAUNCHER=${CF_APP_URL}
-                        COOKIE_DOMAIN=${COOKIE_DOMAIN}
+                        OHRM_DB_HOST="${DB_HOST}"
+                        OHRM_DB_USER="${DB_USER}"
+                        OHRM_DB_PASS="${DB_PASS}"
+                        OHRM_DB_NAME="${DB_NAME}"
+                        OHRM_SESSION_NAME="orangehrm"
+                        CF_LAUNCHER="${CF_APP_URL}"
+                        COOKIE_DOMAIN="${COOKIE_DOMAIN}"
                         """.stripIndent()
 
                         writeFile file: '.env.generated', text: envContent
@@ -175,5 +147,56 @@ pipeline {
                 }
             }
         }
+    }
+
+    // Reusable build function outside stages block
+    post {
+        always {
+            echo "🧼 Build complete for branch: ${env.BRANCH_NAME}, build #${env.BUILD_NUMBER}"
+        }
+    }
+}
+
+def buildYarnProject(projectDir) {
+    dir(projectDir) {
+        echo "⚙️ Building Yarn project in ${projectDir}..."
+
+        sh '''
+            set -e
+
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            nvm use 18 || nvm install 18
+
+            echo "Node version in use:"
+            node -v
+            
+            rm -rf node_modules .yarn
+
+            if [ ! -f yarn.lock ] || [ ! -f package.json ]; then
+                echo "❌ yarn.lock or package.json not found!"
+                exit 1
+            fi
+
+            echo "🧰 Enabling Corepack and preparing Yarn..."
+            corepack enable && echo "[✅] Corepack enabled" >> corepack.log || echo "[❌] Corepack enable failed" >> corepack.log
+            corepack prepare yarn@4.1.0 --activate && echo "[✅] Yarn 4.1.0 prepared" >> corepack.log || echo "[❌] Yarn prepare failed" >> corepack.log
+
+            echo "🧪 Verifying Yarn..."
+            yarn --version >> corepack.log 2>&1 || echo "[❌] Yarn not available" >> corepack.log
+
+            echo "📄 Corepack log content:"
+            cat corepack.log
+
+            echo "🔄 Running yarn install --immutable"
+            yarn install --immutable || {
+                echo "⚠️ yarn install --immutable failed, retrying with regular yarn install"
+                yarn install || { echo "❌ yarn install failed"; exit 1; }
+            }
+
+            yarn build || { echo "❌ yarn build failed"; exit 1; }
+
+            ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
+        '''
     }
 }
