@@ -18,7 +18,7 @@
  -->
 
 <template>
-  <div class="orangehrm-upgrade-container">
+  <!--<div class="orangehrm-upgrade-container">
     <a
       class="orangehrm-upgrade-link"
       target="_blank"
@@ -38,7 +38,7 @@
         </template>
       </oxd-glass-button>
     </a>
-  </div>
+  </div>-->
 </template>
 
 <script>

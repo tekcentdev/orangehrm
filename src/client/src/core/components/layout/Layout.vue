@@ -8,9 +8,11 @@
     <template v-for="(_, name) in $slots" #[name]="slotData">
       <slot :name="name" v-bind="slotData" />
     </template>
+
     <template v-if="showUpgrade" #topbar-header-right-area>
       <upgrade-button v-if="showUpgrade" />
     </template>
+
     <template #user-actions>
       <li>
         <a
@@ -42,6 +44,7 @@
         </a>
       </li>
     </template>
+
     <template #nav-actions>
       <oxd-icon-button
         name="question-lg"
@@ -50,14 +53,15 @@
       />
     </template>
   </oxd-layout>
+
   <about v-if="showAboutModel" @close="closeAboutModel"></about>
 </template>
 
 <script>
-import {provide, readonly, ref} from 'vue';
+import { provide, readonly, ref, onMounted } from 'vue';
 import About from '@/core/pages/About.vue';
-import {OxdLayout} from '@ohrm/oxd';
-import {dateFormatKey} from '@/core/util/composable/useDateFormat';
+import { OxdLayout } from '@ohrm/oxd';
+import { dateFormatKey } from '@/core/util/composable/useDateFormat';
 import UpgradeButton from '@/core/components/buttons/UpgradeButton.vue';
 
 export default {
@@ -99,6 +103,7 @@ export default {
   },
   setup(props) {
     const showAboutModel = ref(false);
+
     provide('permissions', readonly(props.permissions));
     provide(dateFormatKey, readonly(props.dateFormat));
 
@@ -113,6 +118,18 @@ export default {
     const onClickSupport = () => {
       if (props.helpUrl) window.open(props.helpUrl, '_blank');
     };
+
+    // 🔧 Custom logo link override (to '/')
+    onMounted(() => {
+      const interval = setInterval(() => {
+        const logoAnchor = document.querySelector('.oxd-brand-logo');
+        if (logoAnchor) {
+          logoAnchor.setAttribute('href', '/');
+          logoAnchor.setAttribute('target', '_self'); // optional
+          clearInterval(interval);
+        }
+      }, 200);
+    });
 
     return {
       onClickSupport,
