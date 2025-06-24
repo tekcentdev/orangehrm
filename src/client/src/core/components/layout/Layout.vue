@@ -58,10 +58,10 @@
 </template>
 
 <script>
-import { provide, readonly, ref, onMounted } from 'vue';
+import {provide, readonly, ref, onMounted} from 'vue';
 import About from '@/core/pages/About.vue';
-import { OxdLayout } from '@ohrm/oxd';
-import { dateFormatKey } from '@/core/util/composable/useDateFormat';
+import {OxdLayout} from '@ohrm/oxd';
+import {dateFormatKey} from '@/core/util/composable/useDateFormat';
 import UpgradeButton from '@/core/components/buttons/UpgradeButton.vue';
 
 export default {
