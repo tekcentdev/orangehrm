@@ -163,7 +163,14 @@ def buildYarnProject(projectDir) {
 
         sh '''
             set -e
-            echo "🔧 Node: $(node -v)"
+
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            nvm use 18 || nvm install 18
+
+            echo "Node version in use:"
+            node -v
+            
             rm -rf node_modules .yarn
 
             if [ ! -f yarn.lock ] || [ ! -f package.json ]; then
@@ -171,9 +178,15 @@ def buildYarnProject(projectDir) {
                 exit 1
             fi
 
-            echo "🧰 Enabling Corepack for Yarn..."
-            corepack enable
-            corepack prepare yarn@4.1.0 --activate
+            echo "🧰 Enabling Corepack and preparing Yarn..."
+            corepack enable && echo "[✅] Corepack enabled" >> corepack.log || echo "[❌] Corepack enable failed" >> corepack.log
+            corepack prepare yarn@4.1.0 --activate && echo "[✅] Yarn 4.1.0 prepared" >> corepack.log || echo "[❌] Yarn prepare failed" >> corepack.log
+
+            echo "🧪 Verifying Yarn..."
+            yarn --version >> corepack.log 2>&1 || echo "[❌] Yarn not available" >> corepack.log
+
+            echo "📄 Corepack log content:"
+            cat corepack.log
 
             echo "🔄 Running yarn install --immutable"
             yarn install --immutable || {
