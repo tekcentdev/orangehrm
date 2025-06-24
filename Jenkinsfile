@@ -107,13 +107,13 @@ pipeline {
 
                     withCredentials(envCredentials) {
                         def envContent = """
-                        OHRM_DB_HOST=${DB_HOST}
-                        OHRM_DB_USER=${DB_USER}
-                        OHRM_DB_PASS=${DB_PASS}
-                        OHRM_DB_NAME=${DB_NAME}
-                        OHRM_SESSION_NAME=orangehrm
-                        CF_LAUNCHER=${CF_APP_URL}
-                        COOKIE_DOMAIN=${COOKIE_DOMAIN}
+                        OHRM_DB_HOST="${DB_HOST}"
+                        OHRM_DB_USER="${DB_USER}"
+                        OHRM_DB_PASS="${DB_PASS}"
+                        OHRM_DB_NAME="${DB_NAME}"
+                        OHRM_SESSION_NAME="orangehrm"
+                        CF_LAUNCHER="${CF_APP_URL}"
+                        COOKIE_DOMAIN="${COOKIE_DOMAIN}"
                         """.stripIndent()
 
                         writeFile file: '.env.generated', text: envContent
