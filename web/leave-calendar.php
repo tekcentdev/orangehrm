@@ -10,7 +10,7 @@ function requireEnv(string $key): string {
 }
 
 $token = requireEnv('CALENDAR_ACCESS_TOKEN');
-$domain = requireEnv('CALENDAR_DOMAIN');
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
 $leaveTypeColors = [
     'Annual leave' => '#1abc9c',
@@ -39,7 +39,7 @@ foreach ($leaveTypeColors as $name => $color) {
 }
 $legendItems .= '<li><span style="background:' . htmlspecialchars($unapprovedColor, ENT_QUOTES) . '"></span>Not Approved</li>';
 
-$webcal = 'webcal://' . $domain . '/web/leave-calendar-subscription.php?access_token=' . urlencode($token) . '&format=ics';
+$webcal = 'webcal://' . $host . '/web/leave-calendar-subscription.php?access_token=' . urlencode($token) . '&format=ics';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -76,7 +76,20 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   initialView: 'dayGridMonth',
   headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
   height: 'auto',
-  events: 'leave-calendar-subscription.php?access_token=<?= urlencode($token) ?>&format=json'
+  events: 'leave-calendar-subscription.php?access_token=<?= urlencode($token) ?>&format=json',
+  eventOverlap: false,
+  eventContent: function(arg) {
+    const [name, type] = arg.event.title.split(' - ');
+    if (arg.view.type === 'dayGridMonth' || arg.view.type === 'timeGridWeek') {
+      const div = document.createElement('div');
+      div.textContent = name;
+      return { domNodes: [div] };
+    }
+    const div = document.createElement('div');
+    const timeText = arg.timeText ? arg.timeText + ' ' : '';
+    div.textContent = timeText + name + ' - ' + type;
+    return { domNodes: [div] };
+  }
 });
 calendar.render();
 
