@@ -98,7 +98,7 @@ pipeline {
                     def dbNameId = "ohrm_db_name_${envPrefix}"
 
                     def calendarTokenId = "ohrm_calendar_access_token_${envPrefix}"
-                    def calendarDomainId = "ohrm_calendar_domain_${envPrefix}"
+                    def calendarDomainId = "ohrm_domain_${envPrefix}"
 
                     def envCredentials = [
                         usernamePassword(credentialsId: dbCredsId, usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS'),
