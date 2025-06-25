@@ -97,12 +97,15 @@ pipeline {
                     def dbHostId = "ohrm_db_host_${envPrefix}"
                     def dbNameId = "ohrm_db_name_${envPrefix}"
 
+                    def calendarTokenId = "ohrm_calendar_access_token_${envPrefix}"
+
                     def envCredentials = [
                         usernamePassword(credentialsId: dbCredsId, usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS'),
                         string(credentialsId: dbHostId, variable: 'DB_HOST'),
                         string(credentialsId: dbNameId, variable: 'DB_NAME'),
                         string(credentialsId: 'ohrm_cookie_domain', variable: 'COOKIE_DOMAIN'),
-                        string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL')
+                        string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL'),
+                        string(credentialsId: calendarTokenId, variable: 'CALENDAR_ACCESS_TOKEN')
                     ]
 
                     withCredentials(envCredentials) {
@@ -114,6 +117,7 @@ pipeline {
                         OHRM_SESSION_NAME="orangehrm"
                         CF_LAUNCHER="${CF_APP_URL}"
                         COOKIE_DOMAIN="${COOKIE_DOMAIN}"
+                        CALENDAR_ACCESS_TOKEN="${CALENDAR_ACCESS_TOKEN}"
                         """.stripIndent()
 
                         writeFile file: '.env.generated', text: envContent
