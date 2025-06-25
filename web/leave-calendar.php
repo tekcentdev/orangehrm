@@ -80,12 +80,13 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   eventOverlap: false,
   eventContent: function(arg) {
     const [name, type] = arg.event.title.split(' - ');
+    const div = document.createElement('div');
+    div.style.backgroundColor = arg.backgroundColor;
+    div.style.color = arg.textColor;
     if (arg.view.type === 'dayGridMonth' || arg.view.type === 'timeGridWeek') {
-      const div = document.createElement('div');
-      div.textContent = name;
+      div.textContent = name + ' - ' + type;
       return { domNodes: [div] };
     }
-    const div = document.createElement('div');
     const timeText = arg.timeText ? arg.timeText + ' ' : '';
     div.textContent = timeText + name + ' - ' + type;
     return { domNodes: [div] };

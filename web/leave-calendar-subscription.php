@@ -42,6 +42,7 @@ $query = "
         l.leave_request_id,
         l.leave_type_id,
         l.length_days,
+        l.length_hours,
         l.status,
         lt.name AS leave_type,
         e.emp_firstname,
@@ -89,7 +90,8 @@ foreach ($rows as $row) {
     if (!in_array($row['status'], [2,3])) {
         $color = $unapprovedColor;
     }
-    if ($row['duration_type'] == 0) {
+    $fullDay = $row['duration_type'] == 0 || (isset($row['length_hours']) && (float)$row['length_hours'] >= 8);
+    if ($fullDay) {
         if ($current &&
             $current['request'] == $row['leave_request_id'] &&
             $current['end']->format('Y-m-d') == $date->modify('-1 day')->format('Y-m-d') &&
