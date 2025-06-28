@@ -144,10 +144,13 @@ function eventsToIcs(array $events): string {
         if ($event['allDay']) {
             $ics .= 'DTSTART;VALUE=DATE:' . $event['start']->format('Ymd') . "\r\n";
             $ics .= 'DTEND;VALUE=DATE:' . $event['end']->format('Ymd') . "\r\n";
+            $ics .= 'X-MICROSOFT-CDO-ALLDAYEVENT:TRUE' . "\r\n";
         } else {
             $ics .= 'DTSTART:' . $event['start']->format('Ymd\THis') . "\r\n";
             $ics .= 'DTEND:' . $event['end']->format('Ymd\THis') . "\r\n";
         }
+        $ics .= "CLASS:PUBLIC\r\n";
+        $ics .= "TRANSP:OPAQUE\r\n";
         $ics .= "END:VEVENT\r\n";
     }
     $ics .= "END:VCALENDAR\r\n";
