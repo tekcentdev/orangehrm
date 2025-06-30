@@ -10,7 +10,7 @@ function requireEnv(string $key): string {
 }
 
 $token = requireEnv('CALENDAR_ACCESS_TOKEN');
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$host = requireEnv('CALENDAR_DOMAIN');
 
 $leaveTypeColors = [
     'Annual leave' => '#1abc9c',
