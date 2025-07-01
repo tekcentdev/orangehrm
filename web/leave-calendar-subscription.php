@@ -135,6 +135,22 @@ function eventsToIcs(array $events): string {
     $ics .= "PRODID:-//OrangeHRM//Leave Calendar//EN\r\n";
     $ics .= "CALSCALE:GREGORIAN\r\n";
     $ics .= "METHOD:PUBLISH\r\n";
+    $timezones = [
+        'Asia/Hong_Kong' => ['offset' => '+0800', 'name' => 'HKT'],
+        'Asia/Ho_Chi_Minh' => ['offset' => '+0700', 'name' => 'ICT'],
+        'Europe/London' => ['offset' => '+0000', 'name' => 'GMT'],
+    ];
+    foreach ($timezones as $tzId => $info) {
+        $ics .= "BEGIN:VTIMEZONE\r\n";
+        $ics .= "TZID:" . $tzId . "\r\n";
+        $ics .= "BEGIN:STANDARD\r\n";
+        $ics .= "TZOFFSETFROM:" . $info['offset'] . "\r\n";
+        $ics .= "TZOFFSETTO:" . $info['offset'] . "\r\n";
+        $ics .= "TZNAME:" . $info['name'] . "\r\n";
+        $ics .= "DTSTART:19700101T000000\r\n";
+        $ics .= "END:STANDARD\r\n";
+        $ics .= "END:VTIMEZONE\r\n";
+    }
     foreach ($events as $idx => $event) {
         $uid = 'leave-' . $idx . '@orangehrm';
         $ics .= "BEGIN:VEVENT\r\n";
@@ -146,8 +162,8 @@ function eventsToIcs(array $events): string {
             $ics .= 'DTEND;VALUE=DATE:' . $event['end']->format('Ymd') . "\r\n";
             $ics .= 'X-MICROSOFT-CDO-ALLDAYEVENT:TRUE' . "\r\n";
         } else {
-            $ics .= 'DTSTART:' . $event['start']->format('Ymd\THis') . "\r\n";
-            $ics .= 'DTEND:' . $event['end']->format('Ymd\THis') . "\r\n";
+            $ics .= 'DTSTART;TZID=Asia/Hong_Kong:' . $event['start']->format('Ymd\THis') . "\r\n";
+            $ics .= 'DTEND;TZID=Asia/Hong_Kong:' . $event['end']->format('Ymd\THis') . "\r\n";
         }
         $ics .= "CLASS:PUBLIC\r\n";
         $ics .= "TRANSP:OPAQUE\r\n";
