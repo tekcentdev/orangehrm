@@ -46,7 +46,15 @@ $query = "
         l.status,
         lt.name AS leave_type,
         e.emp_firstname,
-        e.emp_lastname
+        e.emp_lastname,
+        (
+            SELECT ol.name
+            FROM hs_hr_emp_locations el
+            LEFT JOIN ohrm_location ol ON el.location_id = ol.id
+            WHERE el.emp_number = e.emp_number
+            ORDER BY el.location_id
+            LIMIT 1
+        ) AS location_name
     FROM ohrm_leave l
     JOIN ohrm_leave_type lt ON l.leave_type_id = lt.id
     JOIN hs_hr_employee e ON l.emp_number = e.emp_number
@@ -61,6 +69,19 @@ $result = $stmt->get_result();
 $rows = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 $mysqli->close();
+
+function locationToTimezone(?string $location): string {
+    $map = [
+        'Hong Kong' => 'Asia/Hong_Kong',
+        'Hong Kong Office' => 'Asia/Hong_Kong',
+        'Vietnam' => 'Asia/Ho_Chi_Minh',
+        'Ho Chi Minh' => 'Asia/Ho_Chi_Minh',
+        'London' => 'Europe/London',
+    ];
+    return $location !== null && isset($map[$location])
+        ? $map[$location]
+        : 'Asia/Hong_Kong';
+}
 
 $leaveTypeColors = [
     'Annual leave' => '#1abc9c',
@@ -86,6 +107,7 @@ $events = [];
 $current = null;
 foreach ($rows as $row) {
     $date = new DateTime($row['date']);
+    $timezone = locationToTimezone($row['location_name'] ?? null);
     $color = $leaveTypeColors[$row['leave_type']] ?? '#cccccc';
     if (!in_array($row['status'], [2,3])) {
         $color = $unapprovedColor;
@@ -110,7 +132,8 @@ foreach ($rows as $row) {
             'end' => $end,
             'allDay' => true,
             'color' => $color,
-            'leaveType' => $row['leave_type']
+            'leaveType' => $row['leave_type'],
+            'timezone' => $timezone
         ];
         $events[] = $event;
         $current = &$events[array_key_last($events)];
@@ -123,7 +146,8 @@ foreach ($rows as $row) {
             'end' => $end,
             'allDay' => false,
             'color' => $color,
-            'leaveType' => $row['leave_type']
+            'leaveType' => $row['leave_type'],
+            'timezone' => $timezone
         ];
         $current = null;
     }
@@ -135,6 +159,22 @@ function eventsToIcs(array $events): string {
     $ics .= "PRODID:-//OrangeHRM//Leave Calendar//EN\r\n";
     $ics .= "CALSCALE:GREGORIAN\r\n";
     $ics .= "METHOD:PUBLISH\r\n";
+    $timezones = [
+        'Asia/Hong_Kong' => ['offset' => '+0800', 'name' => 'HKT'],
+        'Asia/Ho_Chi_Minh' => ['offset' => '+0700', 'name' => 'ICT'],
+        'Europe/London' => ['offset' => '+0000', 'name' => 'GMT'],
+    ];
+    foreach ($timezones as $tzId => $info) {
+        $ics .= "BEGIN:VTIMEZONE\r\n";
+        $ics .= "TZID:" . $tzId . "\r\n";
+        $ics .= "BEGIN:STANDARD\r\n";
+        $ics .= "TZOFFSETFROM:" . $info['offset'] . "\r\n";
+        $ics .= "TZOFFSETTO:" . $info['offset'] . "\r\n";
+        $ics .= "TZNAME:" . $info['name'] . "\r\n";
+        $ics .= "DTSTART:19700101T000000\r\n";
+        $ics .= "END:STANDARD\r\n";
+        $ics .= "END:VTIMEZONE\r\n";
+    }
     foreach ($events as $idx => $event) {
         $uid = 'leave-' . $idx . '@orangehrm';
         $ics .= "BEGIN:VEVENT\r\n";
@@ -146,8 +186,9 @@ function eventsToIcs(array $events): string {
             $ics .= 'DTEND;VALUE=DATE:' . $event['end']->format('Ymd') . "\r\n";
             $ics .= 'X-MICROSOFT-CDO-ALLDAYEVENT:TRUE' . "\r\n";
         } else {
-            $ics .= 'DTSTART:' . $event['start']->format('Ymd\THis') . "\r\n";
-            $ics .= 'DTEND:' . $event['end']->format('Ymd\THis') . "\r\n";
+            $tz = $event['timezone'] ?? 'Asia/Hong_Kong';
+            $ics .= 'DTSTART;TZID=' . $tz . ':' . $event['start']->format('Ymd\THis') . "\r\n";
+            $ics .= 'DTEND;TZID=' . $tz . ':' . $event['end']->format('Ymd\THis') . "\r\n";
         }
         $ics .= "CLASS:PUBLIC\r\n";
         $ics .= "TRANSP:OPAQUE\r\n";
@@ -166,7 +207,8 @@ if ($format === 'json') {
             'end' => $e['end']->format(DateTime::ATOM),
             'allDay' => $e['allDay'],
             'color' => $e['color'],
-            'leaveType' => $e['leaveType']
+            'leaveType' => $e['leaveType'],
+            'timezone' => $e['timezone']
         ];
     }, $events);
     echo json_encode($data);
