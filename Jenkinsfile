@@ -142,11 +142,11 @@ pipeline {
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/.env
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no $PEM_FILE $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/cloudflare.pem
 
-                            # Deploy backup scripts to /opt/backups
-                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_backup.sh $DEPLOY_USER@$DEPLOY_HOST:/opt/backups/orangehrm_backup.sh
-                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_restore.sh $DEPLOY_USER@$DEPLOY_HOST:/opt/backups/orangehrm_restore.sh
+                            # Deploy backup scripts to /usr/local/bin
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_backup.sh $DEPLOY_USER@$DEPLOY_HOST:/usr/local/bin/orangehrm_backup.sh
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_restore.sh $DEPLOY_USER@$DEPLOY_HOST:/usr/local/bin/orangehrm_restore.sh
                             ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \
-                            "chmod 755 /opt/backups/orangehrm_backup.sh /opt/backups/orangehrm_restore.sh"
+                            "chmod 755 /usr/local/bin/orangehrm_backup.sh /usr/local/bin/orangehrm_restore.sh"
 
                             ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \\
                             "chown $DEPLOY_USER:www-data $sharedPath/.env $sharedPath/cloudflare.pem && \\
