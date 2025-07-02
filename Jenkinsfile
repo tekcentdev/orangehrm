@@ -102,7 +102,11 @@ pipeline {
                         string(credentialsId: dbHostId, variable: 'DB_HOST'),
                         string(credentialsId: dbNameId, variable: 'DB_NAME'),
                         string(credentialsId: 'ohrm_cookie_domain', variable: 'COOKIE_DOMAIN'),
-                        string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL')
+                        string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL'),
+                        string(credentialsId: 'ohrm_backup_encryption_password', variable: 'ENCRYPTION_PASS'),
+                        usernamePassword(credentialsId: 'orangehrm_sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASSWORD'),
+                        string(credentialsId: 'orangehrm_sftp_port', variable: 'SFTP_PORT'),
+                        string(credentialsId: 'orangehrm_sftp_host', variable: 'SFTP_HOST')
                     ]
 
                     withCredentials(envCredentials) {
@@ -114,6 +118,11 @@ pipeline {
                         OHRM_SESSION_NAME="orangehrm"
                         CF_LAUNCHER="${CF_APP_URL}"
                         COOKIE_DOMAIN="${COOKIE_DOMAIN}"
+                        ENCRYPTION_PASS="${ENCRYPTION_PASS}"
+                        SFTP_USER="${SFTP_USER}"
+                        SFTP_PASSWORD="${SFTP_PASSWORD}"
+                        SFTP_PORT="${SFTP_PORT}"
+                        SFTP_HOST="${SFTP_HOST}"
                         """.stripIndent()
 
                         writeFile file: '.env.generated', text: envContent
@@ -132,6 +141,12 @@ pipeline {
 
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/.env
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no $PEM_FILE $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/cloudflare.pem
+
+                            # Deploy backup scripts to /usr/local/bin
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_backup.sh $DEPLOY_USER@$DEPLOY_HOST:/usr/local/bin/orangehrm_backup.sh
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_restore.sh $DEPLOY_USER@$DEPLOY_HOST:/usr/local/bin/orangehrm_restore.sh
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \
+                            "chmod 755 /usr/local/bin/orangehrm_backup.sh /usr/local/bin/orangehrm_restore.sh"
 
                             ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \\
                             "chown $DEPLOY_USER:www-data $sharedPath/.env $sharedPath/cloudflare.pem && \\
