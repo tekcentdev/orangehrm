@@ -1,9 +1,12 @@
 #!/bin/bash
 
+LOG_FILE="/opt/backups/backup.log"
+exec >> "$LOG_FILE" 2>&1
+
 set -euo pipefail
 IFS=$'\n\t'
 
-echo "=== OrangeHRM Backup Started: $(date) ==="
+echo "[INFO] Backup started at $(date)"
 
 # === Load environment variables ===
 # IMPORTANT: You must provide your own .env file at deployment time.
@@ -29,7 +32,7 @@ echo "Backup directory created or already exists."
 
 # === Backup database ===
 echo "Backing up database..."
-mysqldump -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$BACKUP_DIR/db_backup_$TIMESTAMP.sql"
+mysqldump -h "$OHRM_DB_HOST" -u "$OHRM_DB_USER" -p"$OHRM_DB_PASS" "$OHRM_DB_NAME" > "$BACKUP_DIR/db_backup_$TIMESTAMP.sql"
 echo "Database backup completed."
 
 # === Backup web directory ===
@@ -51,14 +54,66 @@ openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -salt \
   -pass pass:"$ENCRYPTION_PASS"
 echo "Encryption completed."
 
-# === Upload via SFTP (optional) ===
-echo "Uploading encrypted archive via SFTP..."
-sftp -i "$SFTP_KEY" -P "$SFTP_PORT" "$SFTP_USER@$SFTP_HOST" <<EOF
-cd $SFTP_REMOTE_DIR
-put $BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz.enc
+# === Upload via LFTP ===
+if [ ! -f "$BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz.enc" ]; then
+  echo "❌ Backup file not found: $BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz.enc"
+  exit 1
+fi
+
+#echo "USER: $SFTP_USER"
+#echo "PASS: $SFTP_PASSWORD"
+#echo "Host: ftp://$SFTP_HOST:$SFTP_PORT"
+
+echo "📡 Connecting to FTP server $SFTP_HOST to upload backup..."
+echo "📄 Uploading: $BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz.enc"
+
+lftp -u "$SFTP_USER","$SFTP_PASSWORD" ftp://$SFTP_HOST:$SFTP_PORT -e \
+"set ftp:ssl-force true; \
+ set ftp:ssl-protect-data true; \
+ set ssl:verify-certificate no; \
+ cd backups; \
+ put $BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz.enc; \
+ bye"
+
+if [ $? -eq 0 ]; then
+  echo "✅ Upload complete."
+else
+  echo "❌ Upload failed!"
+  exit 1
+fi
+
+# === Cleanup backup files===
+echo "🧹 Cleaning up FTP backups older than 21 days..."
+
+CUTOFF=$(date -d '21 days ago' +%Y%m%d)
+
+# Step 1: Get remote file list
+REMOTE_FILES=$(lftp -u "$SFTP_USER","$SFTP_PASSWORD" ftp://$SFTP_HOST:$SFTP_PORT -e "
+set ftp:ssl-force true
+set ftp:ssl-protect-data true
+set ssl:verify-certificate no
+cd backups
+cls -1 orangehrm_full_backup_*.tar.gz.enc
 bye
-EOF
-echo "SFTP upload completed."
+")
+
+# Step 2: Parse and delete old files
+for FILE in $REMOTE_FILES; do
+  DATEPART=$(echo "$FILE" | sed -E 's/.*_(20[0-9]{6})_[0-9]{6}\.tar\.gz\.enc/\1/')
+  if [[ "$DATEPART" < "$CUTOFF" ]]; then
+    echo "🗑️  Deleting: $FILE (date $DATEPART < cutoff $CUTOFF)"
+    lftp -u "$SFTP_USER","$SFTP_PASSWORD" ftp://$SFTP_HOST:$SFTP_PORT -e "
+      set ftp:ssl-force true
+      set ftp:ssl-protect-data true
+      set ssl:verify-certificate no
+      cd backups
+      rm $FILE
+      bye
+    "
+  else
+    echo "✅ Keeping: $FILE (date $DATEPART >= cutoff $CUTOFF)"
+  fi
+done
 
 # === Cleanup unencrypted files ===
 echo "Cleaning up unencrypted files..."
