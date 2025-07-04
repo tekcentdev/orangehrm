@@ -24,7 +24,7 @@ fi
 # === Configuration ===
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 WEB_DIR="/var/www/html/orangehrm/prod"
-BACKUP_DIR="/opt/backups/orangehrm-prod"
+BACKUP_DIR="/opt/backups/orangehrm"
 
 echo "Using backup directory: $BACKUP_DIR"
 mkdir -p "$BACKUP_DIR"

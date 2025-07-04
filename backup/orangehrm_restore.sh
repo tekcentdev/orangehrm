@@ -18,7 +18,6 @@ if [ ! -f "$ENCRYPTED_FILE" ]; then
 fi
 
 # === Load environment variables ===
-# IMPORTANT: You must provide your own .env file at deployment time.
 ENV_FILE="${ENV_FILE:-./.env}"  # Default to local .env for testing
 if [ -f "$ENV_FILE" ]; then
     set -a
@@ -31,13 +30,31 @@ else
 fi
 
 # === SETUP PATHS ===
+ENCRYPTED_DIR=$(dirname "$ENCRYPTED_FILE")
 BASENAME=$(basename "$ENCRYPTED_FILE" .tar.gz.enc)
-DECRYPTED_TAR="/tmp/${BASENAME}.tar.gz"
-TMP_DIR="/opt/backups/orangehrm/temp/restore_$BASENAME"
+DECRYPTED_TAR="${ENCRYPTED_DIR}/${BASENAME}.tar.gz"
+TMP_DIR="${ENCRYPTED_DIR}/${BASENAME}_restore"
+
+echo "📄 Encrypted file: $ENCRYPTED_FILE"
+echo "📦 Decrypted tar will be: $DECRYPTED_TAR"
+echo "📂 Extraction target directory: $TMP_DIR"
+
+# === CHECK FOR EXISTING RESTORE FOLDER ===
+if [ -d "$TMP_DIR" ]; then
+  echo "⚠️ Restore directory already exists: $TMP_DIR"
+  echo "Please delete it or rename the encrypted file to avoid conflict."
+  exit 3
+fi
+
+# === DRY RUN SUPPORT (optional override) ===
+if [[ "${DRY_RUN:-false}" == "true" ]]; then
+  echo "🧪 Dry run mode enabled — skipping decryption and extraction."
+  exit 0
+fi
 
 # === DECRYPT ===
 echo "🔐 Decrypting backup..."
-openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 \
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -salt \
   -in "$ENCRYPTED_FILE" \
   -out "$DECRYPTED_TAR" \
   -pass pass:"$ENCRYPTION_PASS"
@@ -51,12 +68,15 @@ tar -xzf "$DECRYPTED_TAR" -C "$TMP_DIR"
 echo "✅ Extraction complete."
 
 # === RESULTS ===
+SQL_FILE=$(find "$TMP_DIR" -name "db_backup_*.sql" | head -n1 || true)
+WEB_FILE=$(find "$TMP_DIR" -name "web_backup_*.tar.gz" | head -n1 || true)
+
 echo
 echo "🗂️  Extracted contents:"
 ls -lh "$TMP_DIR"
 echo
-echo "➡️ Database dump: $TMP_DIR/db_backup_*.sql"
-echo "➡️ Web archive:   $TMP_DIR/web_backup_*.tar.gz"
+echo "➡️ Database dump: ${SQL_FILE:-Not found}"
+echo "➡️ Web archive:   ${WEB_FILE:-Not found}"
 
 # === CLEANUP TEMP FILE ===
 rm -f "$DECRYPTED_TAR"
