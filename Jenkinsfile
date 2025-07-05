@@ -106,6 +106,7 @@ pipeline {
                         string(credentialsId: dbNameId, variable: 'DB_NAME'),
                         string(credentialsId: 'ohrm_cookie_domain', variable: 'COOKIE_DOMAIN'),
                         string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL'),
+                        string(credentialsId: 'ohrm_backup_encryption_password', variable: 'ENCRYPTION_PASS'),
                         string(credentialsId: calendarTokenId, variable: 'CALENDAR_ACCESS_TOKEN'),
                         string(credentialsId: domainId, variable: 'CALENDAR_DOMAIN')
                     ]
@@ -119,6 +120,7 @@ pipeline {
                         OHRM_SESSION_NAME="orangehrm"
                         CF_LAUNCHER="${CF_APP_URL}"
                         COOKIE_DOMAIN="${COOKIE_DOMAIN}"
+                        ENCRYPTION_PASS="${ENCRYPTION_PASS}"
                         CALENDAR_ACCESS_TOKEN="${CALENDAR_ACCESS_TOKEN}"
                         CALENDAR_DOMAIN="${CALENDAR_DOMAIN}"
                         """.stripIndent()

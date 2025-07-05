@@ -17,15 +17,21 @@ if [ ! -f "$ENCRYPTED_FILE" ]; then
   exit 2
 fi
 
+# === Determine environment ===
+OHRM_ENV="${OHRM_ENV:-prod}"  # Default to 'prod' if not set
+ENV_FILE="/var/www/html/orange/$OHRM_ENV/shared/.env"
+
+echo "[INFO] Using environment: $OHRM_ENV"
+echo "[INFO] Loading environment variables from: $ENV_FILE"
+
 # === Load environment variables ===
-ENV_FILE="${ENV_FILE:-./.env}"  # Default to local .env for testing
 if [ -f "$ENV_FILE" ]; then
     set -a
     source "$ENV_FILE"
     set +a
-    echo "Loaded environment variables from $ENV_FILE"
+    echo "[INFO] Environment variables loaded from $ENV_FILE"
 else
-    echo "Env file $ENV_FILE not found!"
+    echo "[ERROR] Env file $ENV_FILE not found!"
     exit 1
 fi
 
