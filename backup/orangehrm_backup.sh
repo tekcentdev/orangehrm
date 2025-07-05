@@ -40,7 +40,7 @@ if [[ "${DRY_RUN:-false}" == "true" ]]; then
   echo "[DRY_RUN] Would back up DB:     $OHRM_DB_NAME on $OHRM_DB_HOST"
   echo "[DRY_RUN] Would back up WEB:    $WEB_DIR"
   echo "[DRY_RUN] Would write to DIR:   $BACKUP_DIR"
-  echo "[DRY_RUN] Would create archive: $BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz"
+  echo "[DRY_RUN] Would create archive: $BACKUP_DIR/orangehrm_full_backup_${OHRM_ENV}_$TIMESTAMP.tar.gz"
   echo "[DRY_RUN] Would encrypt using:  ENCRYPTION_PASS"
   echo "[DRY_RUN] Would upload to FTP:  ftp://$SFTP_HOST:$SFTP_PORT/backups/"
   exit 0
@@ -52,30 +52,30 @@ echo "[INFO] Backup directory created or already exists."
 
 # === Backup database ===
 echo "[INFO] Backing up database..."
-mysqldump -h "$OHRM_DB_HOST" -u "$OHRM_DB_USER" -p"$OHRM_DB_PASS" "$OHRM_DB_NAME" > "$BACKUP_DIR/db_backup_$TIMESTAMP.sql"
+mysqldump -h "$OHRM_DB_HOST" -u "$OHRM_DB_USER" -p"$OHRM_DB_PASS" "$OHRM_DB_NAME" > "$BACKUP_DIR/db_backup_${OHRM_ENV}_$TIMESTAMP.sql"
 echo "[INFO] Database backup completed."
 
 # === Backup web directory ===
 echo "[INFO] Backing up web directory..."
-tar -czf "$BACKUP_DIR/web_backup_$TIMESTAMP.tar.gz" -C "$WEB_DIR" .
+tar -czf "$BACKUP_DIR/web_backup_${OHRM_ENV}_$TIMESTAMP.tar.gz" -C "$WEB_DIR" .
 echo "[INFO] Web directory backup completed."
 
 # === Combine into single archive ===
 echo "[INFO] Combining database and web backups..."
-tar -czf "$BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz" -C "$BACKUP_DIR" \
-    "db_backup_$TIMESTAMP.sql" "web_backup_$TIMESTAMP.tar.gz"
+tar -czf "$BACKUP_DIR/orangehrm_full_backup_${OHRM_ENV}_$TIMESTAMP.tar.gz" -C "$BACKUP_DIR" \
+    "db_backup_${OHRM_ENV}_$TIMESTAMP.sql" "web_backup_${OHRM_ENV}_$TIMESTAMP.tar.gz"
 echo "[INFO] Combined archive created."
 
 # === Encrypt the archive ===
 echo "[INFO] Encrypting backup archive..."
 openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -salt \
-  -in "$BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz" \
-  -out "$BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz.enc" \
+  -in "$BACKUP_DIR/orangehrm_full_backup_${OHRM_ENV}_$TIMESTAMP.tar.gz" \
+  -out "$BACKUP_DIR/orangehrm_full_backup_${OHRM_ENV}_$TIMESTAMP.tar.gz.enc" \
   -pass pass:"$ENCRYPTION_PASS"
 echo "[INFO] Encryption completed."
 
 # === Upload via LFTP ===
-ENC_FILE="$BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz.enc"
+ENC_FILE="$BACKUP_DIR/orangehrm_full_backup_${OHRM_ENV}_$TIMESTAMP.tar.gz.enc"
 if [ ! -f "$ENC_FILE" ]; then
   echo "[ERROR] Encrypted backup file not found: $ENC_FILE"
   exit 1
@@ -107,7 +107,7 @@ REMOTE_FILES=$(lftp -u "$SFTP_USER","$SFTP_PASSWORD" ftp://$SFTP_HOST:$SFTP_PORT
   set ftp:ssl-protect-data true
   set ssl:verify-certificate no
   cd backups
-  cls -1 orangehrm_full_backup_*.tar.gz.enc
+  cls -1 orangehrm_full_backup_${OHRM_ENV}_*.tar.gz.enc
   bye
 ")
 
@@ -130,9 +130,9 @@ done
 
 # === Cleanup local unencrypted files ===
 echo "[INFO] Cleaning up temporary local files..."
-rm -f "$BACKUP_DIR/db_backup_$TIMESTAMP.sql"
-rm -f "$BACKUP_DIR/web_backup_$TIMESTAMP.tar.gz"
-rm -f "$BACKUP_DIR/orangehrm_full_backup_$TIMESTAMP.tar.gz"
+rm -f "$BACKUP_DIR/db_backup_${OHRM_ENV}_$TIMESTAMP.sql"
+rm -f "$BACKUP_DIR/web_backup_${OHRM_ENV}_$TIMESTAMP.tar.gz"
+rm -f "$BACKUP_DIR/orangehrm_full_backup_${OHRM_ENV}_$TIMESTAMP.tar.gz"
 echo "[INFO] Local cleanup complete."
 
 # === Secure the final encrypted archive ===

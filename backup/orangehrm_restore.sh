@@ -1,8 +1,5 @@
 #!/bin/bash
 
-LOG_FILE="/opt/backups/backup.log"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -21,13 +18,12 @@ if [ ! -f "$ENCRYPTED_FILE" ]; then
 fi
 
 # === Determine environment ===
-OHRM_ENV="${OHRM_ENV:-prod}"  # Default to 'prod' if not set
+OHRM_ENV="${OHRM_ENV:-prod}"  # Default to prod if not set
 ENV_FILE="/var/www/html/orangehrm/$OHRM_ENV/shared/.env"
 
 echo "[INFO] Using environment: $OHRM_ENV"
 echo "[INFO] Loading environment variables from: $ENV_FILE"
 
-# === Load environment variables ===
 if [ -f "$ENV_FILE" ]; then
     set -a
     source "$ENV_FILE"
@@ -44,20 +40,20 @@ BASENAME=$(basename "$ENCRYPTED_FILE" .tar.gz.enc)
 DECRYPTED_TAR="${ENCRYPTED_DIR}/${BASENAME}.tar.gz"
 TMP_DIR="${ENCRYPTED_DIR}/${BASENAME}_restore"
 
-echo "📄 Encrypted file: $ENCRYPTED_FILE"
-echo "📦 Decrypted tar will be: $DECRYPTED_TAR"
-echo "📂 Extraction target directory: $TMP_DIR"
+echo "[INFO] Encrypted file:     $ENCRYPTED_FILE"
+echo "[INFO] Decrypted archive:  $DECRYPTED_TAR"
+echo "[INFO] Extraction target:  $TMP_DIR"
 
 # === CHECK FOR EXISTING RESTORE FOLDER ===
 if [ -d "$TMP_DIR" ]; then
   echo "⚠️ Restore directory already exists: $TMP_DIR"
-  echo "Please delete it or rename the encrypted file to avoid conflict."
+  echo "Please delete or rename it to proceed."
   exit 3
 fi
 
-# === DRY RUN SUPPORT (optional override) ===
+# === DRY RUN SUPPORT ===
 if [[ "${DRY_RUN:-false}" == "true" ]]; then
-  echo "🧪 Dry run mode enabled — skipping decryption and extraction."
+  echo "[DRY_RUN] Dry run mode enabled — skipping decryption and extraction."
   exit 0
 fi
 
@@ -67,7 +63,6 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -salt \
   -in "$ENCRYPTED_FILE" \
   -out "$DECRYPTED_TAR" \
   -pass pass:"$ENCRYPTION_PASS"
-
 echo "✅ Decryption complete."
 
 # === EXTRACT ===
@@ -77,8 +72,8 @@ tar -xzf "$DECRYPTED_TAR" -C "$TMP_DIR"
 echo "✅ Extraction complete."
 
 # === RESULTS ===
-SQL_FILE=$(find "$TMP_DIR" -name "db_backup_*.sql" | head -n1 || true)
-WEB_FILE=$(find "$TMP_DIR" -name "web_backup_*.tar.gz" | head -n1 || true)
+SQL_FILE=$(find "$TMP_DIR" -name "db_backup_${OHRM_ENV}_*.sql" | head -n1 || true)
+WEB_FILE=$(find "$TMP_DIR" -name "web_backup_${OHRM_ENV}_*.tar.gz" | head -n1 || true)
 
 echo
 echo "🗂️  Extracted contents:"
