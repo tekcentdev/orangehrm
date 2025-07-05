@@ -107,6 +107,9 @@ pipeline {
                         string(credentialsId: 'ohrm_cookie_domain', variable: 'COOKIE_DOMAIN'),
                         string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL'),
                         string(credentialsId: 'ohrm_backup_encryption_password', variable: 'ENCRYPTION_PASS'),
+                        usernamePassword(credentialsId: 'orangehrm_sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASSWORD'),
+                        string(credentialsId: 'orangehrm_sftp_port', variable: 'SFTP_PORT'),
+                        string(credentialsId: 'orangehrm_sftp_host', variable: 'SFTP_HOST'),
                         string(credentialsId: calendarTokenId, variable: 'CALENDAR_ACCESS_TOKEN'),
                         string(credentialsId: domainId, variable: 'CALENDAR_DOMAIN')
                     ]
@@ -121,6 +124,10 @@ pipeline {
                         CF_LAUNCHER="${CF_APP_URL}"
                         COOKIE_DOMAIN="${COOKIE_DOMAIN}"
                         ENCRYPTION_PASS="${ENCRYPTION_PASS}"
+                        SFTP_USER="${SFTP_USER}"
+                        SFTP_PASSWORD="${SFTP_PASSWORD}"
+                        SFTP_PORT="${SFTP_PORT}"
+                        SFTP_HOST="${SFTP_HOST}"
                         CALENDAR_ACCESS_TOKEN="${CALENDAR_ACCESS_TOKEN}"
                         CALENDAR_DOMAIN="${CALENDAR_DOMAIN}"
                         """.stripIndent()
