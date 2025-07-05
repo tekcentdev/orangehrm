@@ -19,7 +19,7 @@ fi
 
 # === Determine environment ===
 OHRM_ENV="${OHRM_ENV:-prod}"  # Default to 'prod' if not set
-ENV_FILE="/var/www/html/orange/$OHRM_ENV/shared/.env"
+ENV_FILE="/var/www/html/orangehrm/$OHRM_ENV/shared/.env"
 
 echo "[INFO] Using environment: $OHRM_ENV"
 echo "[INFO] Loading environment variables from: $ENV_FILE"
