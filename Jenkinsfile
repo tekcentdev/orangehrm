@@ -147,6 +147,11 @@ pipeline {
                             chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
                             chmod 755 $sharedPath"
 
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_backup.sh $DEPLOY_USER@$DEPLOY_HOST:/opt/backups/orangehrm_backup.sh
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_restore.sh $DEPLOY_USER@$DEPLOY_HOST:/opt/backups/orangehrm_restore.sh
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \
+                            "chmod 755 /opt/backups/orangehrm_backup.sh /opt/backups/orangehrm_restore.sh"
+
                             rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \\
                             --exclude='.git' --exclude='tests' --exclude='.env.generated' --exclude='deploy.path' --exclude='Jenkinsfile' \\
                             ./ \\
