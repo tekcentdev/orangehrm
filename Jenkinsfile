@@ -97,12 +97,21 @@ pipeline {
                     def dbHostId = "ohrm_db_host_${envPrefix}"
                     def dbNameId = "ohrm_db_name_${envPrefix}"
 
+                    def calendarTokenId = "ohrm_calendar_access_token_${envPrefix}"
+                    def domainId = "ohrm_domain_${envPrefix}"
+
                     def envCredentials = [
                         usernamePassword(credentialsId: dbCredsId, usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS'),
                         string(credentialsId: dbHostId, variable: 'DB_HOST'),
                         string(credentialsId: dbNameId, variable: 'DB_NAME'),
                         string(credentialsId: 'ohrm_cookie_domain', variable: 'COOKIE_DOMAIN'),
-                        string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL')
+                        string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL'),
+                        string(credentialsId: 'ohrm_backup_encryption_password', variable: 'ENCRYPTION_PASS'),
+                        usernamePassword(credentialsId: 'orangehrm_sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASSWORD'),
+                        string(credentialsId: 'orangehrm_sftp_port', variable: 'SFTP_PORT'),
+                        string(credentialsId: 'orangehrm_sftp_host', variable: 'SFTP_HOST'),
+                        string(credentialsId: calendarTokenId, variable: 'CALENDAR_ACCESS_TOKEN'),
+                        string(credentialsId: domainId, variable: 'CALENDAR_DOMAIN')
                     ]
 
                     withCredentials(envCredentials) {
@@ -114,6 +123,13 @@ pipeline {
                         OHRM_SESSION_NAME="orangehrm"
                         CF_LAUNCHER="${CF_APP_URL}"
                         COOKIE_DOMAIN="${COOKIE_DOMAIN}"
+                        ENCRYPTION_PASS="${ENCRYPTION_PASS}"
+                        SFTP_USER="${SFTP_USER}"
+                        SFTP_PASSWORD="${SFTP_PASSWORD}"
+                        SFTP_PORT="${SFTP_PORT}"
+                        SFTP_HOST="${SFTP_HOST}"
+                        CALENDAR_ACCESS_TOKEN="${CALENDAR_ACCESS_TOKEN}"
+                        CALENDAR_DOMAIN="${CALENDAR_DOMAIN}"
                         """.stripIndent()
 
                         writeFile file: '.env.generated', text: envContent
@@ -137,6 +153,11 @@ pipeline {
                             "chown $DEPLOY_USER:www-data $sharedPath/.env $sharedPath/cloudflare.pem && \\
                             chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
                             chmod 755 $sharedPath"
+
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_backup.sh $DEPLOY_USER@$DEPLOY_HOST:/opt/backups/orangehrm_backup.sh
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_restore.sh $DEPLOY_USER@$DEPLOY_HOST:/opt/backups/orangehrm_restore.sh
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \
+                            "chmod 755 /opt/backups/orangehrm_backup.sh /opt/backups/orangehrm_restore.sh"
 
                             rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \\
                             --exclude='.git' --exclude='tests' --exclude='.env.generated' --exclude='deploy.path' --exclude='Jenkinsfile' \\
