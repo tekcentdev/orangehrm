@@ -1,5 +1,8 @@
 #!/bin/bash
 
+LOG_FILE="/opt/backups/backup.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 set -euo pipefail
 IFS=$'\n\t'
 
