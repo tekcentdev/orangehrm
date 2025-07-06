@@ -41,11 +41,8 @@ fi
 # === SETUP PATHS ===
 ENCRYPTED_DIR=$(dirname "$ENCRYPTED_FILE")
 BASENAME=$(basename "$ENCRYPTED_FILE" .tar.gz.enc)
-RESTORE_BASE="/opt/backups/orangehrm/${OHRM_ENV}/backups"
-TMP_DIR="${RESTORE_BASE}/${BASENAME}_restore"
-DECRYPTED_TAR="${RESTORE_BASE}/${BASENAME}.tar.gz"
-
-mkdir -p "$RESTORE_BASE"
+TMP_DIR="${ENCRYPTED_DIR}/${BASENAME}_restore"
+DECRYPTED_TAR="${ENCRYPTED_DIR}/${BASENAME}.tar.gz"
 
 echo "[INFO] Encrypted file:     $ENCRYPTED_FILE"
 echo "[INFO] Decrypted archive:  $DECRYPTED_TAR"
