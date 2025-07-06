@@ -5,7 +5,8 @@ IFS=$'\n\t'
 
 # === Setup Logging ===
 OHRM_ENV="${OHRM_ENV:-prod}"  # Default to prod
-LOG_FILE="/opt/backups/orangehrm/${OHRM_ENV}/restore.log"
+BASE_DIR="/opt/backups/orangehrm/prod/backups"
+LOG_FILE="${BASE_DIR}/restore.log"
 mkdir -p "$(dirname "$LOG_FILE")"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
@@ -99,11 +100,4 @@ fi
 if [[ -z "$WEB_FILE" || ! -f "$WEB_FILE" ]]; then
   echo "⚠️  No web archive found in restore directory!"
 else
-  echo "➡️  Web archive: $WEB_FILE"
-fi
-
-# === CLEANUP TEMP FILE ===
-rm -f "$DECRYPTED_TAR"
-echo "🧹 Cleaned up decrypted tar archive."
-
-echo "=== Restore Script Finished: $(date) ==="
+  echo "➡️  Web
