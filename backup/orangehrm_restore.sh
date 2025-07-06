@@ -41,8 +41,11 @@ fi
 # === SETUP PATHS ===
 ENCRYPTED_DIR=$(dirname "$ENCRYPTED_FILE")
 BASENAME=$(basename "$ENCRYPTED_FILE" .tar.gz.enc)
-DECRYPTED_TAR="${ENCRYPTED_DIR}/${BASENAME}.tar.gz"
-TMP_DIR="${ENCRYPTED_DIR}/${BASENAME}_restore"
+RESTORE_BASE="/opt/backups/orangehrm/${OHRM_ENV}/backups"
+TMP_DIR="${RESTORE_BASE}/${BASENAME}_restore"
+DECRYPTED_TAR="${RESTORE_BASE}/${BASENAME}.tar.gz"
+
+mkdir -p "$RESTORE_BASE"
 
 echo "[INFO] Encrypted file:     $ENCRYPTED_FILE"
 echo "[INFO] Decrypted archive:  $DECRYPTED_TAR"
@@ -50,7 +53,7 @@ echo "[INFO] Extraction target:  $TMP_DIR"
 
 # === CHECK FOR EXISTING RESTORE FOLDER ===
 if [ -d "$TMP_DIR" ]; then
-  echo "⚠️ Restore directory already exists: $TMP_DIR"
+  echo "⚠️  Restore directory already exists: $TMP_DIR"
   echo "Please delete or rename it to proceed."
   exit 3
 fi
@@ -58,36 +61,52 @@ fi
 # === DRY RUN SUPPORT ===
 if [[ "${DRY_RUN:-false}" == "true" ]]; then
   echo "[DRY_RUN] Skipping decryption and extraction."
+  echo "[DRY_RUN] Would decrypt: $ENCRYPTED_FILE to $DECRYPTED_TAR"
+  echo "[DRY_RUN] Would extract to: $TMP_DIR"
   exit 0
 fi
 
 # === DECRYPT ===
 echo "🔐 Decrypting backup..."
-openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -salt \
+if ! openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -salt \
   -in "$ENCRYPTED_FILE" \
   -out "$DECRYPTED_TAR" \
-  -pass pass:"$ENCRYPTION_PASS"
+  -pass pass:"$ENCRYPTION_PASS"; then
+  echo "❌ Decryption failed!"
+  exit 4
+fi
 echo "✅ Decryption complete."
 
 # === EXTRACT ===
 echo "📦 Extracting to $TMP_DIR..."
 mkdir -p "$TMP_DIR"
 tar -xzf "$DECRYPTED_TAR" -C "$TMP_DIR"
+chmod 700 "$TMP_DIR"
 echo "✅ Extraction complete."
 
 # === RESULTS ===
-SQL_FILE=$(find "$TMP_DIR" -name "db_backup_${OHRM_ENV}_*.sql" -print -quit)
-WEB_FILE=$(find "$TMP_DIR" -name "web_backup_${OHRM_ENV}_*.tar.gz" -print -quit)
+SQL_FILE=$(find "$TMP_DIR" -name "db_backup_${OHRM_ENV}_*.sql" -print -quit || true)
+WEB_FILE=$(find "$TMP_DIR" -name "web_backup_${OHRM_ENV}_*.tar.gz" -print -quit || true)
 
 echo
 echo "🗂️  Extracted contents:"
 ls -lh "$TMP_DIR"
 echo
-echo "➡️ Database dump: ${SQL_FILE:-Not found}"
-echo "➡️ Web archive:   ${WEB_FILE:-Not found}"
+
+if [[ -z "$SQL_FILE" || ! -f "$SQL_FILE" ]]; then
+  echo "⚠️  No SQL file found in restore directory!"
+else
+  echo "➡️  Database dump: $SQL_FILE"
+fi
+
+if [[ -z "$WEB_FILE" || ! -f "$WEB_FILE" ]]; then
+  echo "⚠️  No web archive found in restore directory!"
+else
+  echo "➡️  Web archive: $WEB_FILE"
+fi
 
 # === CLEANUP TEMP FILE ===
 rm -f "$DECRYPTED_TAR"
-echo "🧹 Cleaned up decrypted tar."
+echo "🧹 Cleaned up decrypted tar archive."
 
 echo "=== Restore Script Finished: $(date) ==="
