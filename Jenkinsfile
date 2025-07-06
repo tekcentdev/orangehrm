@@ -92,6 +92,7 @@ pipeline {
                     def deployPath = readFile('deploy.path').trim()
                     def sharedPath = "${deployPath}/shared"
                     def envPrefix = (deployPath.contains('/test')) ? 'test' : 'prod'
+                    def backupTargetDir = "/opt/backups/orangehrm/${envPrefix}"
 
                     def dbCredsId = "ohrm_db_credentials_${envPrefix}"
                     def dbHostId = "ohrm_db_host_${envPrefix}"
@@ -106,6 +107,10 @@ pipeline {
                         string(credentialsId: dbNameId, variable: 'DB_NAME'),
                         string(credentialsId: 'ohrm_cookie_domain', variable: 'COOKIE_DOMAIN'),
                         string(credentialsId: 'CF_APP_LAUNCHER_URL', variable: 'CF_APP_URL'),
+                        string(credentialsId: 'ohrm_backup_encryption_password', variable: 'ENCRYPTION_PASS'),
+                        usernamePassword(credentialsId: 'orangehrm_sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASSWORD'),
+                        string(credentialsId: 'orangehrm_sftp_port', variable: 'SFTP_PORT'),
+                        string(credentialsId: 'orangehrm_sftp_host', variable: 'SFTP_HOST'),
                         string(credentialsId: calendarTokenId, variable: 'CALENDAR_ACCESS_TOKEN'),
                         string(credentialsId: domainId, variable: 'CALENDAR_DOMAIN')
                     ]
@@ -119,10 +124,15 @@ pipeline {
                         OHRM_SESSION_NAME="orangehrm"
                         CF_LAUNCHER="${CF_APP_URL}"
                         COOKIE_DOMAIN="${COOKIE_DOMAIN}"
+                        ENCRYPTION_PASS="${ENCRYPTION_PASS}"
+                        SFTP_USER="${SFTP_USER}"
+                        SFTP_PASSWORD="${SFTP_PASSWORD}"
+                        SFTP_PORT="${SFTP_PORT}"
+                        SFTP_HOST="${SFTP_HOST}"
                         CALENDAR_ACCESS_TOKEN="${CALENDAR_ACCESS_TOKEN}"
                         CALENDAR_DOMAIN="${CALENDAR_DOMAIN}"
-                    """.stripIndent()
-
+                        """.stripIndent()
+                      
                         writeFile file: '.env.generated', text: envContent
                     }
 
@@ -135,8 +145,9 @@ pipeline {
                         sh """
                             echo "🚀 Deploying to $DEPLOY_USER@$DEPLOY_HOST:$deployPath"
 
-                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $sharedPath"
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $sharedPath $backupTargetDir"
 
+                            # Deploy .env and PEM
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/.env
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no $PEM_FILE $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/cloudflare.pem
 
@@ -145,6 +156,13 @@ pipeline {
                             chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
                             chmod 755 $sharedPath"
 
+                            # Deploy backup scripts to environment-specific path
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_backup.sh $DEPLOY_USER@$DEPLOY_HOST:$backupTargetDir/orangehrm_backup.sh
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_restore.sh $DEPLOY_USER@$DEPLOY_HOST:$backupTargetDir/orangehrm_restore.sh
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \\
+                            "chmod 755 $backupTargetDir/orangehrm_backup.sh $backupTargetDir/orangehrm_restore.sh"
+
+                            # Deploy application code
                             rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \\
                             --exclude='.git' --exclude='tests' --exclude='.env.generated' --exclude='deploy.path' --exclude='Jenkinsfile' \\
                             ./ \\
@@ -154,6 +172,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     // Reusable build function outside stages block
