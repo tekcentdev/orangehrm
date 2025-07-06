@@ -132,7 +132,7 @@ pipeline {
                         CALENDAR_ACCESS_TOKEN="${CALENDAR_ACCESS_TOKEN}"
                         CALENDAR_DOMAIN="${CALENDAR_DOMAIN}"
                         """.stripIndent()
-
+                      
                         writeFile file: '.env.generated', text: envContent
                     }
 
