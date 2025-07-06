@@ -92,6 +92,7 @@ pipeline {
                     def deployPath = readFile('deploy.path').trim()
                     def sharedPath = "${deployPath}/shared"
                     def envPrefix = (deployPath.contains('/test')) ? 'test' : 'prod'
+                    def backupTargetDir = "/opt/backups/orangehrm/${envPrefix}"
 
                     def dbCredsId = "ohrm_db_credentials_${envPrefix}"
                     def dbHostId = "ohrm_db_host_${envPrefix}"
@@ -144,8 +145,9 @@ pipeline {
                         sh """
                             echo "🚀 Deploying to $DEPLOY_USER@$DEPLOY_HOST:$deployPath"
 
-                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $sharedPath"
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $sharedPath $backupTargetDir"
 
+                            # Deploy .env and PEM
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/.env
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no $PEM_FILE $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/cloudflare.pem
 
@@ -154,11 +156,13 @@ pipeline {
                             chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
                             chmod 755 $sharedPath"
 
-                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_backup.sh $DEPLOY_USER@$DEPLOY_HOST:/opt/backups/orangehrm_backup.sh
-                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_restore.sh $DEPLOY_USER@$DEPLOY_HOST:/opt/backups/orangehrm_restore.sh
-                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \
-                            "chmod 755 /opt/backups/orangehrm_backup.sh /opt/backups/orangehrm_restore.sh"
+                            # Deploy backup scripts to environment-specific path
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_backup.sh $DEPLOY_USER@$DEPLOY_HOST:$backupTargetDir/orangehrm_backup.sh
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_restore.sh $DEPLOY_USER@$DEPLOY_HOST:$backupTargetDir/orangehrm_restore.sh
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \\
+                            "chmod 755 $backupTargetDir/orangehrm_backup.sh $backupTargetDir/orangehrm_restore.sh"
 
+                            # Deploy application code
                             rsync -avz --no-times --no-perms -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \\
                             --exclude='.git' --exclude='tests' --exclude='.env.generated' --exclude='deploy.path' --exclude='Jenkinsfile' \\
                             ./ \\
@@ -168,6 +172,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     // Reusable build function outside stages block
