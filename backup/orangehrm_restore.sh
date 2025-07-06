@@ -3,6 +3,12 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# === Setup Logging ===
+OHRM_ENV="${OHRM_ENV:-prod}"  # Default to prod
+LOG_FILE="/opt/backups/orangehrm/${OHRM_ENV}/restore.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 echo "=== OrangeHRM Restore Started: $(date) ==="
 
 # === INPUT VALIDATION ===
@@ -17,10 +23,8 @@ if [ ! -f "$ENCRYPTED_FILE" ]; then
   exit 2
 fi
 
-# === Determine environment ===
-OHRM_ENV="${OHRM_ENV:-prod}"  # Default to prod if not set
+# === Load environment variables ===
 ENV_FILE="/var/www/html/orangehrm/$OHRM_ENV/shared/.env"
-
 echo "[INFO] Using environment: $OHRM_ENV"
 echo "[INFO] Loading environment variables from: $ENV_FILE"
 
@@ -28,7 +32,7 @@ if [ -f "$ENV_FILE" ]; then
     set -a
     source "$ENV_FILE"
     set +a
-    echo "[INFO] Environment variables loaded from $ENV_FILE"
+    echo "[INFO] Environment variables loaded."
 else
     echo "[ERROR] Env file $ENV_FILE not found!"
     exit 1
@@ -53,7 +57,7 @@ fi
 
 # === DRY RUN SUPPORT ===
 if [[ "${DRY_RUN:-false}" == "true" ]]; then
-  echo "[DRY_RUN] Dry run mode enabled — skipping decryption and extraction."
+  echo "[DRY_RUN] Skipping decryption and extraction."
   exit 0
 fi
 
@@ -72,8 +76,8 @@ tar -xzf "$DECRYPTED_TAR" -C "$TMP_DIR"
 echo "✅ Extraction complete."
 
 # === RESULTS ===
-SQL_FILE=$(find "$TMP_DIR" -name "db_backup_${OHRM_ENV}_*.sql" | head -n1 || true)
-WEB_FILE=$(find "$TMP_DIR" -name "web_backup_${OHRM_ENV}_*.tar.gz" | head -n1 || true)
+SQL_FILE=$(find "$TMP_DIR" -name "db_backup_${OHRM_ENV}_*.sql" -print -quit)
+WEB_FILE=$(find "$TMP_DIR" -name "web_backup_${OHRM_ENV}_*.tar.gz" -print -quit)
 
 echo
 echo "🗂️  Extracted contents:"
@@ -84,6 +88,6 @@ echo "➡️ Web archive:   ${WEB_FILE:-Not found}"
 
 # === CLEANUP TEMP FILE ===
 rm -f "$DECRYPTED_TAR"
-echo "🧹 Cleaned up decrypted tar: $DECRYPTED_TAR"
+echo "🧹 Cleaned up decrypted tar."
 
 echo "=== Restore Script Finished: $(date) ==="

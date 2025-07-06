@@ -1,21 +1,21 @@
 #!/bin/bash
 
-LOG_FILE="/opt/backups/backup.log"
+# === Setup Logging ===
+OHRM_ENV="${OHRM_ENV:-prod}"  # Default to 'prod' if not set
+LOG_FILE="/opt/backups/orangehrm/${OHRM_ENV}/backup.log"
+mkdir -p "$(dirname "$LOG_FILE")"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 set -euo pipefail
 IFS=$'\n\t'
 
 echo "[INFO] Backup started at $(date)"
-
-# === Determine environment ===
-OHRM_ENV="${OHRM_ENV:-prod}"  # Default to 'prod' if not set
-ENV_FILE="/var/www/html/orangehrm/$OHRM_ENV/shared/.env"
-
 echo "[INFO] Using environment: $OHRM_ENV"
-echo "[INFO] Loading environment variables from: $ENV_FILE"
 
 # === Load environment variables ===
+ENV_FILE="/var/www/html/orangehrm/$OHRM_ENV/shared/.env"
+echo "[INFO] Loading environment variables from: $ENV_FILE"
+
 if [ -f "$ENV_FILE" ]; then
     set -a
     source "$ENV_FILE"
@@ -52,7 +52,7 @@ echo "[INFO] Backup directory created or already exists."
 
 # === Backup database ===
 echo "[INFO] Backing up database..."
-mysqldump -h "$OHRM_DB_HOST" -u "$OHRM_DB_USER" -p"$OHRM_DB_PASS" "$OHRM_DB_NAME" > "$BACKUP_DIR/db_backup_${OHRM_ENV}_$TIMESTAMP.sql"
+mysqldump --single-transaction --skip-lock-tables -h "$OHRM_DB_HOST" -u "$OHRM_DB_USER" -p"$OHRM_DB_PASS" "$OHRM_DB_NAME" > "$BACKUP_DIR/db_backup_${OHRM_ENV}_$TIMESTAMP.sql"
 echo "[INFO] Database backup completed."
 
 # === Backup web directory ===
