@@ -9,6 +9,14 @@ function requireEnv(string $key): string {
     return $_ENV[$key];
 }
 
+function normalizeLeaveType(string $type): string {
+    $map = [
+        'Sick Leave (paid by company)' => 'Sick Leave',
+        'Sick Leave (paid by Social Ins Dept)' => 'Sick Leave',
+    ];
+    return $map[$type] ?? $type;
+}
+
 $token = requireEnv('CALENDAR_ACCESS_TOKEN');
 $host = requireEnv('CALENDAR_DOMAIN');
 
@@ -24,15 +32,18 @@ $leaveTypeColors = [
     'Occupational accidents or Diseases leave' => '#d35400',
     'Paternity Leave' => '#e67e22',
     'Pregnancy check-up Leave' => '#2980b9',
-    'Sick Leave (paid by company)' => '#34495e',
-    'Sick Leave (paid by Social Ins Dept)' => '#c0392b',
+    'Sick Leave' => '#34495e',
     'Time-off in Lieu' => '#27ae60',
     'Work from home' => '#95a5a6'
 ];
 $unapprovedColor = '#bdc3c7';
 
-$legendItems = '';
+$legendColors = [];
 foreach ($leaveTypeColors as $name => $color) {
+    $legendColors[normalizeLeaveType($name)] = $color;
+}
+$legendItems = '';
+foreach ($legendColors as $name => $color) {
     $legendItems .= '<li><span style="background:' . htmlspecialchars($color, ENT_QUOTES) . '"></span>'
         . htmlspecialchars($name) . '</li>';
 }

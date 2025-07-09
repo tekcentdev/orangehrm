@@ -86,6 +86,8 @@ function locationToTimezone(?string $location): string {
 function normalizeLeaveType(string $type): string {
     $map = [
         'Unpaid Leave' => 'Annual leave',
+        'Sick Leave (paid by company)' => 'Sick Leave',
+        'Sick Leave (paid by Social Ins Dept)' => 'Sick Leave',
     ];
     return $map[$type] ?? $type;
 }
@@ -102,8 +104,7 @@ $leaveTypeColors = [
     'Occupational accidents or Diseases leave' => '#d35400',
     'Paternity Leave' => '#e67e22',
     'Pregnancy check-up Leave' => '#2980b9',
-    'Sick Leave (paid by company)' => '#34495e',
-    'Sick Leave (paid by Social Ins Dept)' => '#c0392b',
+    'Sick Leave' => '#34495e',
     'Time-off in Lieu' => '#27ae60',
     'Work from home' => '#95a5a6'
 ];
@@ -131,7 +132,7 @@ foreach ($rows as $row) {
         $end = (clone $date)->modify('+1 day');
         $event = [
             'request' => $row['leave_request_id'],
-            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $row['leave_type'],
+            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $leaveType,
             'start' => $date,
             'end' => $end,
             'allDay' => true,
@@ -145,7 +146,7 @@ foreach ($rows as $row) {
         $start = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['start_time']);
         $end = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['end_time']);
         $events[] = [
-            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $row['leave_type'],
+            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $leaveType,
             'start' => $start,
             'end' => $end,
             'allDay' => false,
