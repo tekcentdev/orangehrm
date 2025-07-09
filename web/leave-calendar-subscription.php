@@ -116,11 +116,9 @@ foreach ($rows as $row) {
     if ($fullDay) {
         if ($current &&
             $current['request'] == $row['leave_request_id'] &&
-            $current['end']->format('Y-m-d') == $date->modify('-1 day')->format('Y-m-d') &&
+            $current['end']->format('Y-m-d') == $date->format('Y-m-d') &&
             $current['color'] === $color) {
-            $date->modify('+1 day');
-            $current['end'] = $date;
-            $events[$current['index']]['end'] = $date->format('Y-m-d');
+            $current['end']->modify('+1 day');
             continue;
         }
         $end = (clone $date)->modify('+1 day');
