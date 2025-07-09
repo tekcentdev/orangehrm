@@ -83,6 +83,23 @@ function locationToTimezone(?string $location): string {
         : 'Asia/Hong_Kong';
 }
 
+function normalizeLeaveType(string $type): string {
+    $lower = strtolower($type);
+    if (strpos($lower, 'annual') !== false) {
+        return 'Annual leave';
+    }
+    if (strpos($lower, 'sick') !== false) {
+        return 'Sick Leave';
+    }
+    if (strpos($lower, 'work from home') !== false) {
+        return 'Work from home';
+    }
+    if (strpos($lower, 'travel') !== false) {
+        return 'Travel';
+    }
+    return $type;
+}
+
 $leaveTypeColors = [
     'Annual leave' => '#1abc9c',
     'Birthday Leave' => '#3498db',
@@ -101,6 +118,12 @@ $leaveTypeColors = [
     'Unpaid Leave' => '#7f8c8d',
     'Work from home' => '#95a5a6'
 ];
+$leaveTypeEmoji = [
+    'Annual leave' => '🏖️',
+    'Sick Leave' => '🤒',
+    'Work from home' => '🏡',
+    'Travel' => '✈️'
+];
 $unapprovedColor = '#bdc3c7';
 
 $events = [];
@@ -112,6 +135,9 @@ foreach ($rows as $row) {
     if (!in_array($row['status'], [2,3])) {
         $color = $unapprovedColor;
     }
+    $name = $row['emp_firstname'] . ' ' . $row['emp_lastname'];
+    $normalizedType = normalizeLeaveType($row['leave_type']);
+    $emoji = $leaveTypeEmoji[$normalizedType] ?? '';
     $fullDay = $row['duration_type'] == 0 || (isset($row['length_hours']) && (float)$row['length_hours'] >= 8);
     if ($fullDay) {
         if ($current &&
@@ -124,7 +150,9 @@ foreach ($rows as $row) {
         $end = (clone $date)->modify('+1 day');
         $event = [
             'request' => $row['leave_request_id'],
-            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $row['leave_type'],
+            'title' => $name,
+            'emoji' => $emoji,
+            'summary' => trim($name . ' ' . $emoji),
             'start' => $date,
             'end' => $end,
             'allDay' => true,
@@ -138,7 +166,9 @@ foreach ($rows as $row) {
         $start = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['start_time']);
         $end = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['end_time']);
         $events[] = [
-            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $row['leave_type'],
+            'title' => $name,
+            'emoji' => $emoji,
+            'summary' => trim($name . ' ' . $emoji),
             'start' => $start,
             'end' => $end,
             'allDay' => false,
@@ -177,7 +207,8 @@ function eventsToIcs(array $events): string {
         $uid = 'leave-' . $idx . '@orangehrm';
         $ics .= "BEGIN:VEVENT\r\n";
         $ics .= 'UID:' . $uid . "\r\n";
-        $ics .= 'SUMMARY:' . str_replace("\n", ' ', $event['title']) . "\r\n";
+        $summary = $event['summary'] ?? $event['title'];
+        $ics .= 'SUMMARY:' . str_replace("\n", ' ', $summary) . "\r\n";
         $ics .= 'DTSTAMP:' . gmdate('Ymd\THis\Z') . "\r\n";
         if ($event['allDay']) {
             $ics .= 'DTSTART;VALUE=DATE:' . $event['start']->format('Ymd') . "\r\n";
@@ -201,6 +232,7 @@ if ($format === 'json') {
     $data = array_map(function ($e) {
         return [
             'title' => $e['title'],
+            'emoji' => $e['emoji'],
             'start' => $e['start']->format(DateTime::ATOM),
             'end' => $e['end']->format(DateTime::ATOM),
             'allDay' => $e['allDay'],
