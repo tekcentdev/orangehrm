@@ -85,6 +85,7 @@ function locationToTimezone(?string $location): string {
 
 function normalizeLeaveType(string $type): string {
     $map = [
+        'Unpaid Leave' => 'Annual leave',
         'Sick Leave (paid by company)' => 'Sick Leave',
         'Sick Leave (paid by Social Ins Dept)' => 'Sick Leave',
     ];
@@ -105,7 +106,6 @@ $leaveTypeColors = [
     'Pregnancy check-up Leave' => '#2980b9',
     'Sick Leave' => '#34495e',
     'Time-off in Lieu' => '#27ae60',
-    'Unpaid Leave' => '#7f8c8d',
     'Work from home' => '#95a5a6'
 ];
 $unapprovedColor = '#bdc3c7';
