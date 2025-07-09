@@ -9,6 +9,14 @@ function requireEnv(string $key): string {
     return $_ENV[$key];
 }
 
+function normalizeLeaveType(string $type): string {
+    $map = [
+        'Sick Leave (paid by company)' => 'Sick Leave',
+        'Sick Leave (paid by Social Ins Dept)' => 'Sick Leave',
+    ];
+    return $map[$type] ?? $type;
+}
+
 $token = requireEnv('CALENDAR_ACCESS_TOKEN');
 $host = requireEnv('CALENDAR_DOMAIN');
 
@@ -24,16 +32,24 @@ $leaveTypeColors = [
     'Occupational accidents or Diseases leave' => '#d35400',
     'Paternity Leave' => '#e67e22',
     'Pregnancy check-up Leave' => '#2980b9',
-    'Sick Leave (paid by company)' => '#34495e',
-    'Sick Leave (paid by Social Ins Dept)' => '#c0392b',
+    'Sick Leave' => '#34495e',
     'Time-off in Lieu' => '#27ae60',
-    'Unpaid Leave' => '#7f8c8d',
     'Work from home' => '#95a5a6'
+];
+$leaveTypeEmoji = [
+    'Annual leave' => '🏖️',
+    'Sick Leave' => '🤒',
+    'Work from home' => '🏡',
+    'Travel' => '✈️'
 ];
 $unapprovedColor = '#bdc3c7';
 
-$legendItems = '';
+$legendColors = [];
 foreach ($leaveTypeColors as $name => $color) {
+    $legendColors[normalizeLeaveType($name)] = $color;
+}
+$legendItems = '';
+foreach ($legendColors as $name => $color) {
     $legendItems .= '<li><span style="background:' . htmlspecialchars($color, ENT_QUOTES) . '"></span>'
         . htmlspecialchars($name) . '</li>';
 }
@@ -71,6 +87,15 @@ $webcal = 'webcal://' . $host . '/web/leave-calendar-subscription.php?access_tok
 </div>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
 <script>
+const leaveTypeEmoji = <?= json_encode($leaveTypeEmoji) ?>;
+function normalizeLeaveType(type) {
+  const lower = type.toLowerCase();
+  if (lower.includes('annual')) return 'Annual leave';
+  if (lower.includes('sick')) return 'Sick Leave';
+  if (lower.includes('work from home')) return 'Work from home';
+  if (lower.includes('travel')) return 'Travel';
+  return type;
+}
 const calendarEl = document.getElementById('calendar');
 const calendar = new FullCalendar.Calendar(calendarEl, {
   initialView: 'dayGridMonth',
@@ -79,16 +104,19 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   events: 'leave-calendar-subscription.php?access_token=<?= urlencode($token) ?>&format=json',
   eventOverlap: false,
   eventContent: function(arg) {
-    const [name, type] = arg.event.title.split(' - ');
+    const name = arg.event.title;
+    const type = arg.event.extendedProps.leaveType || '';
+    const normalized = normalizeLeaveType(type);
+    const emoji = leaveTypeEmoji[normalized] || '';
     const div = document.createElement('div');
     div.style.backgroundColor = arg.backgroundColor;
     div.style.color = arg.textColor;
-    if (arg.view.type === 'dayGridMonth' || arg.view.type === 'timeGridWeek') {
-      div.textContent = name + ' - ' + type;
-      return { domNodes: [div] };
+    let text = name + (emoji ? ' ' + emoji : '');
+    if (arg.view.type !== 'dayGridMonth' && arg.view.type !== 'timeGridWeek') {
+      const timeText = arg.timeText ? arg.timeText + ' ' : '';
+      text = timeText + text;
     }
-    const timeText = arg.timeText ? arg.timeText + ' ' : '';
-    div.textContent = timeText + name + ' - ' + type;
+    div.textContent = text;
     return { domNodes: [div] };
   }
 });
