@@ -2,6 +2,9 @@
 // Load environment variables
 $_ENV = parse_ini_file(__DIR__ . '/../shared/.env') ?: [];
 
+require_once __DIR__ . '/../src/plugins/orangehrmLeavePlugin/entity/Leave.php';
+use OrangeHRM\Entity\Leave;
+
 function requireEnv(string $key): string {
     if (!isset($_ENV[$key]) || $_ENV[$key] === '') {
         http_response_code(500);
@@ -135,9 +138,11 @@ foreach ($rows as $row) {
     if (!in_array($row['status'], [2,3])) {
         $color = $unapprovedColor;
     }
-    $name = $row['emp_firstname'] . ' ' . $row['emp_lastname'];
-    $normalizedType = normalizeLeaveType($row['leave_type']);
-    $emoji = $leaveTypeEmoji[$normalizedType] ?? '';
+
+    $status = in_array($row['status'], [Leave::LEAVE_STATUS_LEAVE_APPROVED, Leave::LEAVE_STATUS_LEAVE_TAKEN])
+        ? 'CONFIRMED'
+        : 'TENTATIVE';
+
     $fullDay = $row['duration_type'] == 0 || (isset($row['length_hours']) && (float)$row['length_hours'] >= 8);
     if ($fullDay) {
         if ($current &&
@@ -157,8 +162,10 @@ foreach ($rows as $row) {
             'end' => $end,
             'allDay' => true,
             'color' => $color,
-            'leaveType' => $leaveType,
-            'timezone' => $timezone
+            'leaveType' => $row['leave_type'],
+            'timezone' => $timezone,
+            'status' => $status
+
         ];
         $events[] = $event;
         $current = &$events[array_key_last($events)];
@@ -173,8 +180,9 @@ foreach ($rows as $row) {
             'end' => $end,
             'allDay' => false,
             'color' => $color,
-            'leaveType' => $leaveType,
-            'timezone' => $timezone
+            'leaveType' => $row['leave_type'],
+            'timezone' => $timezone,
+            'status' => $status
         ];
         unset($current);
         $current = null;
@@ -219,6 +227,7 @@ function eventsToIcs(array $events): string {
             $ics .= 'DTSTART;TZID=' . $tz . ':' . $event['start']->format('Ymd\THis') . "\r\n";
             $ics .= 'DTEND;TZID=' . $tz . ':' . $event['end']->format('Ymd\THis') . "\r\n";
         }
+        $ics .= 'STATUS:' . $event['status'] . "\r\n";
         $ics .= "CLASS:PUBLIC\r\n";
         $ics .= "TRANSP:OPAQUE\r\n";
         $ics .= "END:VEVENT\r\n";
@@ -238,7 +247,8 @@ if ($format === 'json') {
             'allDay' => $e['allDay'],
             'color' => $e['color'],
             'leaveType' => $e['leaveType'],
-            'timezone' => $e['timezone']
+            'timezone' => $e['timezone'],
+            'status' => $e['status']
         ];
     }, $events);
     echo json_encode($data);
