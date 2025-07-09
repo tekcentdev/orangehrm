@@ -27,7 +27,6 @@ $leaveTypeColors = [
     'Sick Leave (paid by company)' => '#34495e',
     'Sick Leave (paid by Social Ins Dept)' => '#c0392b',
     'Time-off in Lieu' => '#27ae60',
-    'Unpaid Leave' => '#7f8c8d',
     'Work from home' => '#95a5a6'
 ];
 $unapprovedColor = '#bdc3c7';
