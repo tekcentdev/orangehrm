@@ -123,7 +123,6 @@ foreach ($rows as $row) {
         }
         $end = (clone $date)->modify('+1 day');
         $event = [
-            'index' => count($events),
             'request' => $row['leave_request_id'],
             'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $row['leave_type'],
             'start' => $date,
@@ -147,6 +146,7 @@ foreach ($rows as $row) {
             'leaveType' => $row['leave_type'],
             'timezone' => $timezone
         ];
+        unset($current);
         $current = null;
     }
 }
