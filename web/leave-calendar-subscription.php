@@ -83,6 +83,14 @@ function locationToTimezone(?string $location): string {
         : 'Asia/Hong_Kong';
 }
 
+function normalizeLeaveType(string $type): string {
+    $map = [
+        'Sick Leave (paid by company)' => 'Sick Leave',
+        'Sick Leave (paid by Social Ins Dept)' => 'Sick Leave',
+    ];
+    return $map[$type] ?? $type;
+}
+
 $leaveTypeColors = [
     'Annual leave' => '#1abc9c',
     'Birthday Leave' => '#3498db',
@@ -95,8 +103,7 @@ $leaveTypeColors = [
     'Occupational accidents or Diseases leave' => '#d35400',
     'Paternity Leave' => '#e67e22',
     'Pregnancy check-up Leave' => '#2980b9',
-    'Sick Leave (paid by company)' => '#34495e',
-    'Sick Leave (paid by Social Ins Dept)' => '#c0392b',
+    'Sick Leave' => '#34495e',
     'Time-off in Lieu' => '#27ae60',
     'Unpaid Leave' => '#7f8c8d',
     'Work from home' => '#95a5a6'
@@ -108,7 +115,8 @@ $current = null;
 foreach ($rows as $row) {
     $date = new DateTime($row['date']);
     $timezone = locationToTimezone($row['location_name'] ?? null);
-    $color = $leaveTypeColors[$row['leave_type']] ?? '#cccccc';
+    $leaveType = normalizeLeaveType($row['leave_type']);
+    $color = $leaveTypeColors[$leaveType] ?? '#cccccc';
     if (!in_array($row['status'], [2,3])) {
         $color = $unapprovedColor;
     }
@@ -124,12 +132,12 @@ foreach ($rows as $row) {
         $end = (clone $date)->modify('+1 day');
         $event = [
             'request' => $row['leave_request_id'],
-            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $row['leave_type'],
+            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $leaveType,
             'start' => $date,
             'end' => $end,
             'allDay' => true,
             'color' => $color,
-            'leaveType' => $row['leave_type'],
+            'leaveType' => $leaveType,
             'timezone' => $timezone
         ];
         $events[] = $event;
@@ -138,12 +146,12 @@ foreach ($rows as $row) {
         $start = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['start_time']);
         $end = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['end_time']);
         $events[] = [
-            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $row['leave_type'],
+            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $leaveType,
             'start' => $start,
             'end' => $end,
             'allDay' => false,
             'color' => $color,
-            'leaveType' => $row['leave_type'],
+            'leaveType' => $leaveType,
             'timezone' => $timezone
         ];
         unset($current);
