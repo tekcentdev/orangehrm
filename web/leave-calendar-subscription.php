@@ -64,11 +64,18 @@ $query = "
     JOIN ohrm_leave_type lt ON l.leave_type_id = lt.id
     JOIN hs_hr_employee e ON l.emp_number = e.emp_number
     WHERE l.date BETWEEN ? AND ?
+        AND l.status IN (?, ?)
     ORDER BY l.emp_number, l.leave_request_id, l.date
 ";
 
 $stmt = $mysqli->prepare($query);
-$stmt->bind_param('ss', $fromDate, $toDate);
+$stmt->bind_param(
+    'ssii',
+    $fromDate,
+    $toDate,
+    Leave::LEAVE_STATUS_LEAVE_APPROVED,
+    Leave::LEAVE_STATUS_LEAVE_TAKEN
+);
 $stmt->execute();
 $result = $stmt->get_result();
 $rows = $result->fetch_all(MYSQLI_ASSOC);
