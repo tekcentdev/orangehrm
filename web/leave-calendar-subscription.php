@@ -2,7 +2,9 @@
 // Load environment variables
 $_ENV = parse_ini_file(__DIR__ . '/../shared/.env') ?: [];
 
-require_once __DIR__ . '/../src/plugins/orangehrmLeavePlugin/entity/Leave.php';
+// Autoload dependencies so we can access entity constants
+require __DIR__ . '/../src/vendor/autoload.php';
+
 use OrangeHRM\Entity\Leave;
 
 function requireEnv(string $key): string {
