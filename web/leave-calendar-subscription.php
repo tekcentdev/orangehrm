@@ -141,6 +141,9 @@ foreach ($rows as $row) {
         $color = $unapprovedColor;
     }
 
+    $name = $row['emp_firstname'] . ' ' . $row['emp_lastname'];
+    $emoji = $leaveTypeEmoji[$leaveType] ?? '';
+
     $status = in_array($row['status'], [Leave::LEAVE_STATUS_LEAVE_APPROVED, Leave::LEAVE_STATUS_LEAVE_TAKEN])
         ? 'CONFIRMED'
         : 'TENTATIVE';
@@ -164,7 +167,7 @@ foreach ($rows as $row) {
             'end' => $end,
             'allDay' => true,
             'color' => $color,
-            'leaveType' => $row['leave_type'],
+            'leaveType' => $leaveType,
             'timezone' => $timezone,
             'status' => $status
 
@@ -182,7 +185,7 @@ foreach ($rows as $row) {
             'end' => $end,
             'allDay' => false,
             'color' => $color,
-            'leaveType' => $row['leave_type'],
+            'leaveType' => $leaveType,
             'timezone' => $timezone,
             'status' => $status
         ];
