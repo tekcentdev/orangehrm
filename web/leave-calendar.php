@@ -1,5 +1,7 @@
 <?php
-$_ENV = parse_ini_file(__DIR__ . '/../shared/.env') ?: [];
+$_ENV = parse_ini_file(__DIR__ . '/../shared/.env')
+    ?: parse_ini_file(__DIR__ . '/../.env')
+    ?: [];
 if (isset($_GET['debug']) && $_GET['debug'] === 'true') {
     error_reporting(E_ALL);
     ini_set('display_errors', 'On');

@@ -1,6 +1,8 @@
 <?php
-// Load environment variables
-$_ENV = parse_ini_file(__DIR__ . '/../shared/.env') ?: [];
+// Load environment variables from `shared/.env` or fallback to `.env`
+$_ENV = parse_ini_file(__DIR__ . '/../shared/.env')
+    ?: parse_ini_file(__DIR__ . '/../.env')
+    ?: [];
 if (isset($_GET['debug']) && $_GET['debug'] === 'true') {
     error_reporting(E_ALL);
     ini_set('display_errors', 'On');
@@ -68,17 +70,21 @@ $query = "
     JOIN ohrm_leave_type lt ON l.leave_type_id = lt.id
     JOIN hs_hr_employee e ON l.emp_number = e.emp_number
     WHERE l.date BETWEEN ? AND ?
-        AND l.status IN (?, ?)
+        AND l.status IN (?, ?, ?)
     ORDER BY l.emp_number, l.leave_request_id, l.date
 ";
 
 $stmt = $mysqli->prepare($query);
+$pendingStatus = Leave::LEAVE_STATUS_LEAVE_PENDING_APPROVAL;
+$approvedStatus = Leave::LEAVE_STATUS_LEAVE_APPROVED;
+$takenStatus = Leave::LEAVE_STATUS_LEAVE_TAKEN;
 $stmt->bind_param(
-    'ssii',
+    'ssiii',
     $fromDate,
     $toDate,
-    Leave::LEAVE_STATUS_LEAVE_APPROVED,
-    Leave::LEAVE_STATUS_LEAVE_TAKEN
+    $pendingStatus,
+    $approvedStatus,
+    $takenStatus
 );
 $stmt->execute();
 $result = $stmt->get_result();
