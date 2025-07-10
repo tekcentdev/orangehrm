@@ -166,6 +166,7 @@ foreach ($rows as $row) {
         }
         $end = (clone $date)->modify('+1 day');
         $event = [
+            'id' => $row['id'],
             'request' => $row['leave_request_id'],
             'title' => $name,
             'emoji' => $emoji,
@@ -185,6 +186,7 @@ foreach ($rows as $row) {
         $start = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['start_time']);
         $end = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['end_time']);
         $events[] = [
+            'id' => $row['id'],
             'title' => $name,
             'emoji' => $emoji,
             'summary' => trim($name . ' ' . $emoji),
@@ -224,7 +226,7 @@ function eventsToIcs(array $events): string {
         $ics .= "END:VTIMEZONE\r\n";
     }
     foreach ($events as $idx => $event) {
-        $uid = 'leave-' . $idx . '@orangehrm';
+        $uid = 'leave-' . ($event['id'] ?? $idx) . '@orangehrm';
         $ics .= "BEGIN:VEVENT\r\n";
         $ics .= 'UID:' . $uid . "\r\n";
         $summary = $event['summary'] ?? $event['title'];
