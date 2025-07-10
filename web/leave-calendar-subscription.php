@@ -2,7 +2,9 @@
 // Load environment variables
 $_ENV = parse_ini_file(__DIR__ . '/../shared/.env') ?: [];
 
-require_once __DIR__ . '/../src/plugins/orangehrmLeavePlugin/entity/Leave.php';
+// Autoload dependencies so we can access entity constants
+require __DIR__ . '/../src/vendor/autoload.php';
+
 use OrangeHRM\Entity\Leave;
 
 function requireEnv(string $key): string {
@@ -139,6 +141,9 @@ foreach ($rows as $row) {
         $color = $unapprovedColor;
     }
 
+    $name = $row['emp_firstname'] . ' ' . $row['emp_lastname'];
+    $emoji = $leaveTypeEmoji[$leaveType] ?? '';
+
     $status = in_array($row['status'], [Leave::LEAVE_STATUS_LEAVE_APPROVED, Leave::LEAVE_STATUS_LEAVE_TAKEN])
         ? 'CONFIRMED'
         : 'TENTATIVE';
@@ -162,7 +167,7 @@ foreach ($rows as $row) {
             'end' => $end,
             'allDay' => true,
             'color' => $color,
-            'leaveType' => $row['leave_type'],
+            'leaveType' => $leaveType,
             'timezone' => $timezone,
             'status' => $status
 
@@ -180,7 +185,7 @@ foreach ($rows as $row) {
             'end' => $end,
             'allDay' => false,
             'color' => $color,
-            'leaveType' => $row['leave_type'],
+            'leaveType' => $leaveType,
             'timezone' => $timezone,
             'status' => $status
         ];
