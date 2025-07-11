@@ -79,6 +79,14 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
   height: 'auto',
   events: 'leave-calendar-subscription.php?access_token=<?= urlencode($token) ?>&format=json',
+  eventDataTransform: function(data) {
+    const approved = data.status === 'CONFIRMED';
+    const color = approved ? '#2ecc71' : '#bdc3c7';
+    data.backgroundColor = color;
+    data.borderColor = color;
+    data.textColor = approved ? '#fff' : '#000';
+    return data;
+  },
   eventOverlap: false,
   eventContent: function(arg) {
     const name = arg.event.title;
