@@ -124,15 +124,13 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
     const name = info.event.title;
     const type = info.event.extendedProps.leaveType || '';
     const normalized = normalizeLeaveType(type);
-    const emoji = leaveTypeEmoji[normalized] || '';
-    let timePart = '';
+    let tooltip = name + ' - ' + normalized;
     if (!info.event.allDay) {
       const opts = { hour: '2-digit', minute: '2-digit' };
       const startStr = info.event.start.toLocaleTimeString([], opts);
       const endStr = info.event.end.toLocaleTimeString([], opts);
-      timePart = startStr + ' - ' + endStr + ' ';
+      tooltip += ' ' + startStr + ' - ' + endStr;
     }
-    const tooltip = timePart + name + (emoji ? ' ' + emoji : '');
     info.el.setAttribute('title', tooltip);
   }
 });
