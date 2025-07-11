@@ -59,7 +59,7 @@ $subscribeUrl = 'webcal://' . $host . '/web/leave-calendar.php?access_token=' . 
 </head>
 <body>
 <div class="header">
-  <h2>Leave Calendar</h2>
+  <h2><a href="/web/leave/viewLeaveList">Leave</a> &gt; Leave Calendar</h2>
 </div>
 <div id="calendar"></div>
 <div class="subscribe">
