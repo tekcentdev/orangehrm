@@ -90,11 +90,14 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   height: 'auto',
   events: 'leave-calendar-subscription.php?access_token=<?= urlencode($token) ?>&format=json',
   eventDataTransform: function(data) {
-    const approved = data.status === 'CONFIRMED';
-    const color = approved ? '#2ecc71' : '#bdc3c7';
+    let color = data.color;
+    if (!color) {
+      const approved = data.status === 'CONFIRMED';
+      color = approved ? '#2ecc71' : '#bdc3c7';
+    }
     data.backgroundColor = color;
     data.borderColor = color;
-    data.textColor = approved ? '#fff' : '#000';
+    data.textColor = '#fff';
     return data;
   },
   eventOverlap: false,
