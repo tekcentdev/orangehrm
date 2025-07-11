@@ -1,6 +1,17 @@
 <?php
-// Load environment variables
-$_ENV = parse_ini_file(__DIR__ . '/../shared/.env') ?: [];
+// Load environment variables from `shared/.env` or fallback to `.env`
+$_ENV = parse_ini_file(__DIR__ . '/../shared/.env')
+    ?: parse_ini_file(__DIR__ . '/../.env')
+    ?: [];
+if (isset($_GET['debug']) && $_GET['debug'] === 'true') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 'On');
+}
+
+// Autoload dependencies so we can access entity constants
+require __DIR__ . '/../src/vendor/autoload.php';
+
+use OrangeHRM\Entity\Leave;
 
 function requireEnv(string $key): string {
     if (!isset($_ENV[$key]) || $_ENV[$key] === '') {
@@ -59,11 +70,22 @@ $query = "
     JOIN ohrm_leave_type lt ON l.leave_type_id = lt.id
     JOIN hs_hr_employee e ON l.emp_number = e.emp_number
     WHERE l.date BETWEEN ? AND ?
+        AND l.status IN (?, ?, ?)
     ORDER BY l.emp_number, l.leave_request_id, l.date
 ";
 
 $stmt = $mysqli->prepare($query);
-$stmt->bind_param('ss', $fromDate, $toDate);
+$pendingStatus = Leave::LEAVE_STATUS_LEAVE_PENDING_APPROVAL;
+$approvedStatus = Leave::LEAVE_STATUS_LEAVE_APPROVED;
+$takenStatus = Leave::LEAVE_STATUS_LEAVE_TAKEN;
+$stmt->bind_param(
+    'ssiii',
+    $fromDate,
+    $toDate,
+    $pendingStatus,
+    $approvedStatus,
+    $takenStatus
+);
 $stmt->execute();
 $result = $stmt->get_result();
 $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -83,6 +105,24 @@ function locationToTimezone(?string $location): string {
         : 'Asia/Hong_Kong';
 }
 
+function normalizeLeaveType(string $type): string {
+
+    $lower = strtolower($type);
+    if (strpos($lower, 'annual') !== false) {
+        return 'Annual leave';
+    }
+    if (strpos($lower, 'sick') !== false) {
+        return 'Sick Leave';
+    }
+    if (strpos($lower, 'work from home') !== false) {
+        return 'Work from home';
+    }
+    if (strpos($lower, 'travel') !== false) {
+        return 'Travel';
+    }
+    return $type;
+}
+
 $leaveTypeColors = [
     'Annual leave' => '#1abc9c',
     'Birthday Leave' => '#3498db',
@@ -95,60 +135,81 @@ $leaveTypeColors = [
     'Occupational accidents or Diseases leave' => '#d35400',
     'Paternity Leave' => '#e67e22',
     'Pregnancy check-up Leave' => '#2980b9',
-    'Sick Leave (paid by company)' => '#34495e',
-    'Sick Leave (paid by Social Ins Dept)' => '#c0392b',
+    'Sick Leave' => '#34495e',
     'Time-off in Lieu' => '#27ae60',
-    'Unpaid Leave' => '#7f8c8d',
     'Work from home' => '#95a5a6'
+];
+$leaveTypeEmoji = [
+    'Annual leave' => '🏖️',
+    'Sick Leave' => '🤒',
+    'Work from home' => '🏡',
+    'Travel' => '✈️'
 ];
 $unapprovedColor = '#bdc3c7';
 
 $events = [];
 $current = null;
 foreach ($rows as $row) {
-    $date = new DateTime($row['date']);
     $timezone = locationToTimezone($row['location_name'] ?? null);
-    $color = $leaveTypeColors[$row['leave_type']] ?? '#cccccc';
+    $date = new DateTime($row['date'], new DateTimeZone($timezone));
+    $leaveType = normalizeLeaveType($row['leave_type']);
+    $color = $leaveTypeColors[$leaveType] ?? '#cccccc';
     if (!in_array($row['status'], [2,3])) {
         $color = $unapprovedColor;
     }
+
+    $name = $row['emp_firstname'] . ' ' . $row['emp_lastname'];
+    $emoji = $leaveTypeEmoji[$leaveType] ?? '';
+
+    $status = in_array($row['status'], [Leave::LEAVE_STATUS_LEAVE_APPROVED, Leave::LEAVE_STATUS_LEAVE_TAKEN])
+        ? 'CONFIRMED'
+        : 'TENTATIVE';
+
     $fullDay = $row['duration_type'] == 0 || (isset($row['length_hours']) && (float)$row['length_hours'] >= 8);
     if ($fullDay) {
         if ($current &&
             $current['request'] == $row['leave_request_id'] &&
-            $current['end']->format('Y-m-d') == $date->modify('-1 day')->format('Y-m-d') &&
+            $current['end']->format('Y-m-d') == $date->format('Y-m-d') &&
             $current['color'] === $color) {
-            $date->modify('+1 day');
-            $current['end'] = $date;
-            $events[$current['index']]['end'] = $date->format('Y-m-d');
+            $current['end']->modify('+1 day');
             continue;
         }
         $end = (clone $date)->modify('+1 day');
         $event = [
-            'index' => count($events),
+            'id' => $row['id'],
             'request' => $row['leave_request_id'],
-            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $row['leave_type'],
+            'title' => $name,
+            'emoji' => $emoji,
+            'summary' => trim($name . ' ' . $emoji),
             'start' => $date,
             'end' => $end,
             'allDay' => true,
             'color' => $color,
-            'leaveType' => $row['leave_type'],
-            'timezone' => $timezone
+            'leaveType' => $leaveType,
+            'timezone' => $timezone,
+            'status' => $status
+
         ];
         $events[] = $event;
         $current = &$events[array_key_last($events)];
     } else {
-        $start = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['start_time']);
-        $end = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['end_time']);
+        $tzObj = new DateTimeZone($timezone);
+        $start = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['start_time'], $tzObj);
+        $end = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['end_time'], $tzObj);
         $events[] = [
-            'title' => $row['emp_firstname'] . ' ' . $row['emp_lastname'] . ' - ' . $row['leave_type'],
+            'id' => $row['id'],
+            'title' => $name,
+            'emoji' => $emoji,
+            'summary' => trim($name . ' ' . $emoji),
             'start' => $start,
             'end' => $end,
             'allDay' => false,
             'color' => $color,
-            'leaveType' => $row['leave_type'],
-            'timezone' => $timezone
+            'leaveType' => $leaveType,
+            'timezone' => $timezone,
+            'status' => $status
         ];
+        unset($current);
         $current = null;
     }
 }
@@ -176,10 +237,11 @@ function eventsToIcs(array $events): string {
         $ics .= "END:VTIMEZONE\r\n";
     }
     foreach ($events as $idx => $event) {
-        $uid = 'leave-' . $idx . '@orangehrm';
+        $uid = 'leave-' . ($event['id'] ?? $idx) . '@orangehrm';
         $ics .= "BEGIN:VEVENT\r\n";
         $ics .= 'UID:' . $uid . "\r\n";
-        $ics .= 'SUMMARY:' . str_replace("\n", ' ', $event['title']) . "\r\n";
+        $summary = $event['summary'] ?? $event['title'];
+        $ics .= 'SUMMARY:' . str_replace("\n", ' ', $summary) . "\r\n";
         $ics .= 'DTSTAMP:' . gmdate('Ymd\THis\Z') . "\r\n";
         if ($event['allDay']) {
             $ics .= 'DTSTART;VALUE=DATE:' . $event['start']->format('Ymd') . "\r\n";
@@ -190,6 +252,7 @@ function eventsToIcs(array $events): string {
             $ics .= 'DTSTART;TZID=' . $tz . ':' . $event['start']->format('Ymd\THis') . "\r\n";
             $ics .= 'DTEND;TZID=' . $tz . ':' . $event['end']->format('Ymd\THis') . "\r\n";
         }
+        $ics .= 'STATUS:' . $event['status'] . "\r\n";
         $ics .= "CLASS:PUBLIC\r\n";
         $ics .= "TRANSP:OPAQUE\r\n";
         $ics .= "END:VEVENT\r\n";
@@ -203,12 +266,14 @@ if ($format === 'json') {
     $data = array_map(function ($e) {
         return [
             'title' => $e['title'],
+            'emoji' => $e['emoji'],
             'start' => $e['start']->format(DateTime::ATOM),
             'end' => $e['end']->format(DateTime::ATOM),
             'allDay' => $e['allDay'],
             'color' => $e['color'],
             'leaveType' => $e['leaveType'],
-            'timezone' => $e['timezone']
+            'timezone' => $e['timezone'],
+            'status' => $e['status']
         ];
     }, $events);
     echo json_encode($data);
