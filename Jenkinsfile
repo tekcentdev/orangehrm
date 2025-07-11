@@ -177,32 +177,34 @@ def buildYarnProject(projectDir) {
 
             echo "Node version in use:"
             node -v
-            
-            rm -rf node_modules .yarn
 
             if [ ! -f yarn.lock ] || [ ! -f package.json ]; then
                 echo "❌ yarn.lock or package.json not found!"
                 exit 1
             fi
 
-            echo "🧰 Enabling Corepack and preparing Yarn..."
-            corepack enable && echo "[✅] Corepack enabled" >> corepack.log || echo "[❌] Corepack enable failed" >> corepack.log
-            corepack prepare yarn@4.1.0 --activate && echo "[✅] Yarn 4.1.0 prepared" >> corepack.log || echo "[❌] Yarn prepare failed" >> corepack.log
+            echo "🧰 Checking for Yarn version 4.1.0..."
 
-            echo "🧪 Verifying Yarn..."
-            yarn --version >> corepack.log 2>&1 || echo "[❌] Yarn not available" >> corepack.log
+            CURRENT_YARN_VERSION=$(yarn --version 2>/dev/null || echo "none")
+            if [ "$CURRENT_YARN_VERSION" != "4.1.0" ]; then
+                echo "🔧 Setting up Corepack and Yarn 4.1.0..."
+                corepack enable
+                corepack prepare yarn@4.1.0 --activate
+            else
+                echo "✅ Yarn 4.1.0 already in place"
+            fi
 
-            echo "📄 Corepack log content:"
-            cat corepack.log
-
-            echo "🔄 Running yarn install --immutable"
-            yarn install --immutable || {
-                echo "⚠️ yarn install --immutable failed, retrying with regular yarn install"
+            echo "📦 Installing dependencies using yarn install --immutable"
+            if ! yarn install --immutable; then
+                echo "⚠️ Immutable install failed, retrying with clean install"
+                rm -rf node_modules .yarn
                 yarn install || { echo "❌ yarn install failed"; exit 1; }
-            }
-            
+            fi
+
+            echo "🏗️ Running yarn build..."
             yarn build || { echo "❌ yarn build failed"; exit 1; }
 
+            echo "📦 Build output:"
             ls -lh dist || ls -lh build || ls -lh .next || echo "❌ No build output"
         '''
     }
