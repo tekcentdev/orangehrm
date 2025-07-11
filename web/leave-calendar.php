@@ -42,7 +42,7 @@ $leaveTypeEmoji = [
     'Travel' => '✈️'
 ];
 
-$subscribeUrl = 'https://' . $host . '/web/leave-calendar.php?access_token=' . urlencode($token);
+$subscribeUrl = 'webcal://' . $host . '/web/leave-calendar.php?access_token=' . urlencode($token);
 ?>
 <!DOCTYPE html>
 <html lang="en">
