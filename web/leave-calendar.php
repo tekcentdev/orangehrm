@@ -132,7 +132,8 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
       const endStr = info.event.end.toLocaleTimeString([], opts);
       timePart = startStr + ' - ' + endStr + ' ';
     }
-    info.el.title = timePart + name + (emoji ? ' ' + emoji : '');
+    const tooltip = timePart + name + (emoji ? ' ' + emoji : '');
+    info.el.setAttribute('title', tooltip);
   }
 });
 calendar.render();
