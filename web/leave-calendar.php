@@ -16,52 +16,33 @@ function requireEnv(string $key): string {
 }
 
 function normalizeLeaveType(string $type): string {
-    $map = [
-        'Sick Leave (paid by company)' => 'Sick Leave',
-        'Sick Leave (paid by Social Ins Dept)' => 'Sick Leave',
-    ];
-    return $map[$type] ?? $type;
+    $lower = strtolower($type);
+    if (strpos($lower, 'annual') !== false) {
+        return 'Annual leave';
+    }
+    if (strpos($lower, 'sick') !== false) {
+        return 'Sick Leave';
+    }
+    if (strpos($lower, 'work from home') !== false) {
+        return 'Work from home';
+    }
+    if (strpos($lower, 'travel') !== false) {
+        return 'Travel';
+    }
+    return $type;
 }
 
 $token = requireEnv('CALENDAR_ACCESS_TOKEN');
 $host = requireEnv('CALENDAR_DOMAIN');
 
-$leaveTypeColors = [
-    'Annual leave' => '#1abc9c',
-    'Birthday Leave' => '#3498db',
-    'Breavement leave' => '#e74c3c',
-    'Convalescence Leave' => '#9b59b6',
-    "Employee’s Children Marriage" => '#f39c12',
-    'Marriage Leave' => '#8e44ad',
-    'Maternity Leave' => '#2ecc71',
-    'Maternity Leave in working hour' => '#16a085',
-    'Occupational accidents or Diseases leave' => '#d35400',
-    'Paternity Leave' => '#e67e22',
-    'Pregnancy check-up Leave' => '#2980b9',
-    'Sick Leave' => '#34495e',
-    'Time-off in Lieu' => '#27ae60',
-    'Work from home' => '#95a5a6'
-];
 $leaveTypeEmoji = [
     'Annual leave' => '🏖️',
     'Sick Leave' => '🤒',
     'Work from home' => '🏡',
     'Travel' => '✈️'
 ];
-$unapprovedColor = '#bdc3c7';
 
-$legendColors = [];
-foreach ($leaveTypeColors as $name => $color) {
-    $legendColors[normalizeLeaveType($name)] = $color;
-}
-$legendItems = '';
-foreach ($legendColors as $name => $color) {
-    $legendItems .= '<li><span style="background:' . htmlspecialchars($color, ENT_QUOTES) . '"></span>'
-        . htmlspecialchars($name) . '</li>';
-}
-$legendItems .= '<li><span style="background:' . htmlspecialchars($unapprovedColor, ENT_QUOTES) . '"></span>Not Approved</li>';
-
-$webcal = 'webcal://' . $host . '/web/leave-calendar-subscription.php?access_token=' . urlencode($token) . '&format=ics';
+$subscribeUrl = 'https://' . $host . '/web/leave-calendar.php?access_token=' . urlencode($token);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,23 +54,23 @@ $webcal = 'webcal://' . $host . '/web/leave-calendar-subscription.php?access_tok
   body { font-family: Arial, sans-serif; padding: 20px; }
   .header { display: flex; align-items: center; justify-content: space-between; max-width: 900px; margin: 0 auto; }
   #calendar { max-width: 900px; margin: 20px auto; }
-  .legend { max-width: 900px; margin: 20px auto; }
-  .legend ul { list-style: none; padding-left: 0; display: flex; flex-wrap: wrap; }
-  .legend li { margin-right: 15px; display: flex; align-items: center; }
-  .legend span { display: inline-block; width: 12px; height: 12px; margin-right: 5px; }
+  .subscribe { max-width: 900px; margin: 20px auto; }
 </style>
 </head>
 <body>
 <div class="header">
   <h2>Leave Calendar</h2>
-  <button id="copyLink">Copy Subscription Link</button>
 </div>
 <div id="calendar"></div>
-<div class="legend">
-  <h3>Legend</h3>
-  <ul>
-    <?= $legendItems ?>
-  </ul>
+<div class="subscribe">
+  <h3>Subscribe to Leave Calendar</h3>
+  <ol>
+    <li>Visit <a href="https://outlook.office.com/calendar">https://outlook.office.com/calendar</a></li>
+    <li>Choose <strong>Add Calendar</strong></li>
+    <li>Select <strong>Subscribe from web</strong></li>
+    <li>Paste <code><?= htmlspecialchars($subscribeUrl, ENT_QUOTES) ?></code></li>
+    <li>Optional: Select the calendar in Outlook Desktop</li>
+  </ol>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
 <script>
@@ -108,6 +89,14 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
   height: 'auto',
   events: 'leave-calendar-subscription.php?access_token=<?= urlencode($token) ?>&format=json',
+  eventDataTransform: function(data) {
+    const approved = data.status === 'CONFIRMED';
+    const color = approved ? '#2ecc71' : '#bdc3c7';
+    data.backgroundColor = color;
+    data.borderColor = color;
+    data.textColor = approved ? '#fff' : '#000';
+    return data;
+  },
   eventOverlap: false,
   eventContent: function(arg) {
     const name = arg.event.title;
@@ -115,8 +104,10 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
     const normalized = normalizeLeaveType(type);
     const emoji = leaveTypeEmoji[normalized] || '';
     const div = document.createElement('div');
-    div.style.backgroundColor = arg.backgroundColor;
-    div.style.color = arg.textColor;
+    if (arg.view.type === 'dayGridMonth' || arg.view.type === 'timeGridWeek') {
+      div.style.whiteSpace = 'normal';
+      div.style.overflowWrap = 'anywhere';
+    }
     let text = name + (emoji ? ' ' + emoji : '');
     if (arg.view.type !== 'dayGridMonth' && arg.view.type !== 'timeGridWeek') {
       const timeText = arg.timeText ? arg.timeText + ' ' : '';
@@ -127,11 +118,6 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   }
 });
 calendar.render();
-
-document.getElementById('copyLink').addEventListener('click', () => {
-  navigator.clipboard.writeText('<?= $webcal ?>');
-  alert('Subscription link copied to clipboard');
-});
 </script>
 </body>
 </html>
