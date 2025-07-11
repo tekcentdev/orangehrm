@@ -97,6 +97,8 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
     data.backgroundColor = color;
     data.borderColor = color;
     data.textColor = approved ? '#fff' : '#000';
+    // force block display so timed events in month view show background color
+    data.display = 'block';
     return data;
   },
   eventOverlap: false,
@@ -117,6 +119,20 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
     }
     div.textContent = text;
     return { domNodes: [div] };
+  },
+  eventDidMount: function(info) {
+    const name = info.event.title;
+    const type = info.event.extendedProps.leaveType || '';
+    const normalized = normalizeLeaveType(type);
+    const emoji = leaveTypeEmoji[normalized] || '';
+    let timePart = '';
+    if (!info.event.allDay) {
+      const opts = { hour: '2-digit', minute: '2-digit' };
+      const startStr = info.event.start.toLocaleTimeString([], opts);
+      const endStr = info.event.end.toLocaleTimeString([], opts);
+      timePart = startStr + ' - ' + endStr + ' ';
+    }
+    info.el.title = timePart + name + (emoji ? ' ' + emoji : '');
   }
 });
 calendar.render();
