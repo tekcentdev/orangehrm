@@ -42,7 +42,7 @@ $leaveTypeEmoji = [
     'Travel' => '✈️'
 ];
 
-$webcal = 'webcal://' . $host . '/web/leave-calendar-subscription.php?access_token=' . urlencode($token) . '&format=ics';
+$subscribeUrl = 'https://' . $host . '/web/leave-calendar.php?access_token=' . urlencode($token);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,14 +54,24 @@ $webcal = 'webcal://' . $host . '/web/leave-calendar-subscription.php?access_tok
   body { font-family: Arial, sans-serif; padding: 20px; }
   .header { display: flex; align-items: center; justify-content: space-between; max-width: 900px; margin: 0 auto; }
   #calendar { max-width: 900px; margin: 20px auto; }
+  .subscribe { max-width: 900px; margin: 20px auto; }
 </style>
 </head>
 <body>
 <div class="header">
   <h2>Leave Calendar</h2>
-  <button id="copyLink">Copy Subscription Link</button>
 </div>
 <div id="calendar"></div>
+<div class="subscribe">
+  <h3>Subscribe to Leave Calendar</h3>
+  <ol>
+    <li>Visit <a href="https://outlook.office.com/calendar">https://outlook.office.com/calendar</a></li>
+    <li>Choose <strong>Add Calendar</strong></li>
+    <li>Select <strong>Subscribe from web</strong></li>
+    <li>Paste <code><?= htmlspecialchars($subscribeUrl, ENT_QUOTES) ?></code></li>
+    <li>Optional: Select the calendar in Outlook Desktop</li>
+  </ol>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
 <script>
 const leaveTypeEmoji = <?= json_encode($leaveTypeEmoji) ?>;
@@ -108,11 +118,6 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   }
 });
 calendar.render();
-
-document.getElementById('copyLink').addEventListener('click', () => {
-  navigator.clipboard.writeText('<?= $webcal ?>');
-  alert('Subscription link copied to clipboard');
-});
 </script>
 </body>
 </html>
