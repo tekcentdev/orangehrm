@@ -150,8 +150,8 @@ $unapprovedColor = '#bdc3c7';
 $events = [];
 $current = null;
 foreach ($rows as $row) {
-    $date = new DateTime($row['date']);
     $timezone = locationToTimezone($row['location_name'] ?? null);
+    $date = new DateTime($row['date'], new DateTimeZone($timezone));
     $leaveType = normalizeLeaveType($row['leave_type']);
     $color = $leaveTypeColors[$leaveType] ?? '#cccccc';
     if (!in_array($row['status'], [2,3])) {
@@ -193,8 +193,9 @@ foreach ($rows as $row) {
         $events[] = $event;
         $current = &$events[array_key_last($events)];
     } else {
-        $start = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['start_time']);
-        $end = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['end_time']);
+        $tzObj = new DateTimeZone($timezone);
+        $start = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['start_time'], $tzObj);
+        $end = DateTime::createFromFormat('Y-m-d H:i:s', $row['date'] . ' ' . $row['end_time'], $tzObj);
         $events[] = [
             'id' => $row['id'],
             'title' => $name,
