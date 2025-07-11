@@ -43,20 +43,33 @@ $leaveTypeEmoji = [
 ];
 
 $subscribeUrl = 'https://' . $host . '/web/leave-calendar.php?access_token=' . urlencode($token);
+
+$baseUrl = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/');
+$publicPath = $baseUrl;
+$sidePanelMenuItems = [
+    ['label' => 'Dashboard', 'url' => $baseUrl . '/index.php'],
+    ['label' => 'Leave', 'url' => $baseUrl . '/leave/viewLeaveList'],
+];
+$userInfo = [
+    'firstName' => 'User',
+    'lastName' => 'Demo',
+    'profImgSrc' => $publicPath . '/images/default-photo.png',
+    'hasPassword' => false,
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="dist/favicon.ico">
-<link href="dist/css/chunk-vendors.css" rel="preload" as="style">
-<link href="dist/css/app.css" rel="preload" as="style">
-<link href="dist/js/chunk-vendors.js" rel="preload" as="script">
-<link href="dist/js/app.js" rel="preload" as="script">
+<link rel="icon" href="<?= $publicPath ?>/dist/favicon.ico">
+<link href="<?= $publicPath ?>/dist/css/chunk-vendors.css" rel="preload" as="style">
+<link href="<?= $publicPath ?>/dist/css/app.css" rel="preload" as="style">
+<link href="<?= $publicPath ?>/dist/js/chunk-vendors.js" rel="preload" as="script">
+<link href="<?= $publicPath ?>/dist/js/app.js" rel="preload" as="script">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css">
-<link href="dist/css/chunk-vendors.css" rel="stylesheet"/>
-<link href="dist/css/app.css" rel="stylesheet"/>
+<link href="<?= $publicPath ?>/dist/css/chunk-vendors.css" rel="stylesheet"/>
+<link href="<?= $publicPath ?>/dist/css/app.css" rel="stylesheet"/>
 <style>
   body { font-family: Arial, sans-serif; padding: 20px; }
   .header { display: flex; align-items: center; justify-content: space-between; max-width: 900px; margin: 0 auto; }
@@ -68,9 +81,11 @@ $subscribeUrl = 'https://' . $host . '/web/leave-calendar.php?access_token=' . u
 <div id="app">
 <oxd-layout
     home-url="/"
-    :sidepanel-menu-items="[]"
+    :sidepanel-menu-items='<?= json_encode($sidePanelMenuItems) ?>'
     :topbar-menu-items="[]"
-    :user="{}"
+    :user='<?= json_encode($userInfo) ?>'
+    brand-logo-src="<?= $publicPath ?>/images/ohrm_logo.png"
+    brand-banner-src="<?= $publicPath ?>/images/ohrm_branding.png"
     logout-url="#"
     support-url="#"
     :update-password-url="null"
@@ -102,10 +117,13 @@ $subscribeUrl = 'https://' . $host . '/web/leave-calendar.php?access_token=' . u
 </oxd-layout>
 </div>
 <script type="text/javascript">
-  window.appGlobal = { baseUrl: '', publicPath: '' };
+  window.appGlobal = {
+    baseUrl: <?= json_encode($baseUrl) ?>,
+    publicPath: <?= json_encode($publicPath) ?>
+  };
 </script>
-<script src="dist/js/chunk-vendors.js"></script>
-<script src="dist/js/app.js"></script>
+<script src="<?= $publicPath ?>/dist/js/chunk-vendors.js"></script>
+<script src="<?= $publicPath ?>/dist/js/app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
 <script>
 const leaveTypeEmoji = <?= json_encode($leaveTypeEmoji) ?>;
@@ -124,7 +142,7 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   height: 'auto',
   slotMinTime: '08:00:00',
   slotMaxTime: '19:00:00',
-  events: 'leave-calendar-subscription.php?access_token=<?= urlencode($token) ?>&format=json',
+  events: window.appGlobal.baseUrl + '/leave-calendar-subscription.php?access_token=<?= urlencode($token) ?>&format=json',
   eventDataTransform: function(data) {
     const approved = data.status === 'CONFIRMED';
     const color = approved ? '#2ecc71' : '#bdc3c7';
