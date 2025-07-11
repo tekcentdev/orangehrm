@@ -2,6 +2,11 @@
 // --- Load .env securely ---
 $_ENV = parse_ini_file(__DIR__ . '/../shared/.env') ?: [];
 
+if (isset($_GET['debug']) && $_GET['debug'] === 'true') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 'On');
+}
+
 // --- Secure env var helper ---
 function requireEnv(string $key): string {
     if (!isset($_ENV[$key]) || $_ENV[$key] === '') {
@@ -24,10 +29,6 @@ session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'None'
 ]);
-
-// Enable debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 // Autoload Composer dependencies
 require __DIR__ . '/../src/vendor/autoload.php';
