@@ -88,6 +88,8 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   initialView: 'dayGridMonth',
   headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
   height: 'auto',
+  slotMinTime: '08:00:00',
+  slotMaxTime: '19:00:00',
   events: 'leave-calendar-subscription.php?access_token=<?= urlencode($token) ?>&format=json',
   eventDataTransform: function(data) {
     const approved = data.status === 'CONFIRMED';
