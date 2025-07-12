@@ -55,6 +55,19 @@ $subscribeUrl = 'webcal://' . $host . '/web/leave-calendar-subscription.php?acce
   .header { display: flex; align-items: center; justify-content: space-between; max-width: 900px; margin: 0 auto; }
   #calendar { max-width: 900px; margin: 20px auto; }
   .subscribe { max-width: 900px; margin: 20px auto; }
+
+  /* Better alignment for FullCalendar header on small screens */
+  @media (max-width: 600px) {
+    .fc-header-toolbar {
+      flex-direction: column;
+      align-items: center;
+    }
+    .fc-header-toolbar .fc-toolbar-chunk {
+      width: 100%;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+  }
 </style>
 </head>
 <body>
