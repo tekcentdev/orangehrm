@@ -101,6 +101,8 @@ pipeline {
                     def calendarTokenId = "ohrm_calendar_access_token_${envPrefix}"
                     def domainId = "ohrm_domain_${envPrefix}"
 
+                    
+
                     def envCredentials = [
                         usernamePassword(credentialsId: dbCredsId, usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS'),
                         string(credentialsId: dbHostId, variable: 'DB_HOST'),
@@ -113,7 +115,7 @@ pipeline {
                         string(credentialsId: 'orangehrm_sftp_host', variable: 'SFTP_HOST'),
                         string(credentialsId: calendarTokenId, variable: 'CALENDAR_ACCESS_TOKEN'),
                         string(credentialsId: domainId, variable: 'CALENDAR_DOMAIN'),
-                        string(credentialsId: 'CF_JWKS_URL', variable: 'JWKS_URL'),
+                        string(credentialsId: 'CF_JWKS_URL', variable: 'JWKS_URL')
                     ]
 
                     withCredentials(envCredentials) {
@@ -159,6 +161,9 @@ pipeline {
                             --exclude='.git' --exclude='tests' --exclude='.env.generated' --exclude='deploy.path' --exclude='Jenkinsfile' \\
                             ./ \\
                             $DEPLOY_USER@$DEPLOY_HOST:$deployPath
+
+                            # Deploy the generated environment file to shared/.env
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/.env
                         """
                     }
                 }
