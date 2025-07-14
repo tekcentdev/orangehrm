@@ -1,13 +1,10 @@
 <?php
-// --- Load .env securely ---
-$_ENV = parse_ini_file(__DIR__ . '/../shared/.env') ?: [];
-
-if (isset($_GET['debug']) && $_GET['debug'] === 'true') {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 'On');
+// --- Load environment variables from ../shared/.env ---
+$envPath = __DIR__ . '/../shared/.env';
+if (file_exists($envPath)) {
+    $_ENV = array_merge($_ENV, parse_ini_file($envPath, false, INI_SCANNER_TYPED));
 }
 
-// --- Secure env var helper ---
 function requireEnv(string $key): string {
     if (!isset($_ENV[$key]) || $_ENV[$key] === '') {
         http_response_code(500);
@@ -16,7 +13,7 @@ function requireEnv(string $key): string {
     return $_ENV[$key];
 }
 
-// --- Setup session ---
+// --- Secure session setup ---
 session_name(requireEnv('OHRM_SESSION_NAME'));
 if (isset($_COOKIE[requireEnv('OHRM_SESSION_NAME')])) {
     session_id($_COOKIE[requireEnv('OHRM_SESSION_NAME')]);
@@ -30,44 +27,70 @@ session_set_cookie_params([
     'samesite' => 'None'
 ]);
 
-// Autoload Composer dependencies
 require __DIR__ . '/../src/vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Firebase\JWT\ExpiredException;
 
-// --- JwtValidator class ---
+// --- JWT Validator using JWKS ---
 class JwtValidator {
-    private string $publicKey;
+    private string $jwksUrl;
 
-    public function __construct(string $pemPath) {
-        if (!file_exists($pemPath)) {
-            throw new Exception("Public key file not found");
-        }
-        $this->publicKey = file_get_contents($pemPath);
-        if (!$this->publicKey) {
-            throw new Exception("Unable to read PEM file");
-        }
+    public function __construct(string $jwksUrl) {
+        $this->jwksUrl = $jwksUrl;
     }
 
     public function getEmailFromJWT(string $jwt): string {
-        try {
-            $decoded = JWT::decode($jwt, new Key($this->publicKey, 'RS256'));
-            if (!isset($decoded->email)) {
-                throw new Exception("Email claim not found in JWT");
-            }
-            return $decoded->email;
-        } catch (ExpiredException $e) {
-            throw new Exception("JWT expired");
-        } catch (Exception $e) {
-            throw new Exception("Invalid JWT: " . $e->getMessage());
+        $parts = explode('.', $jwt);
+        if (count($parts) !== 3) {
+            throw new Exception("Malformed JWT");
         }
+
+        $header = json_decode(base64_decode(strtr($parts[0], '-_', '+/')), true);
+        if (!isset($header['kid'])) {
+            throw new Exception("Missing 'kid' in JWT header");
+        }
+
+        $cert = $this->getCertByKid($header['kid']);
+        $decoded = JWT::decode($jwt, new Key($cert, 'RS256'));
+
+        if (!isset($decoded->email)) {
+            throw new Exception("Email claim not found in JWT");
+        }
+
+        return $decoded->email;
+    }
+
+    private function getCertByKid(string $kid): string {
+        $json = file_get_contents($this->jwksUrl);
+        if (!$json) {
+            throw new Exception("Unable to fetch JWKS from Cloudflare");
+        }
+
+        $data = json_decode($json, true);
+        foreach ($data['public_certs'] as $certInfo) {
+            if ($certInfo['kid'] === $kid) {
+                return $certInfo['cert'];
+            }
+        }
+
+        throw new Exception("No certificate found for kid: $kid");
     }
 }
 
 // --- Extract and validate JWT ---
 $jwt = $_SERVER['HTTP_CF_ACCESS_JWT_ASSERTION'] ?? null;
+
+if (isset($_GET['debug']) && $_GET['debug'] === 'true') {
+    header('Content-Type: text/plain');
+    var_dump([
+        'jwt' => $jwt,
+        '_ENV' => $_ENV,
+    ]);
+    exit;
+}
+
 if (!$jwt) {
     http_response_code(401);
     header("Location: " . requireEnv('CF_LAUNCHER'));
@@ -75,11 +98,11 @@ if (!$jwt) {
 }
 
 try {
-    $validator = new JwtValidator(__DIR__ . '/../shared/cloudflare.pem');
+    $validator = new JwtValidator(requireEnv('CF_JWKS_URL'));
     $email = $validator->getEmailFromJWT($jwt);
 } catch (Exception $e) {
     http_response_code(403);
-    exit($e->getMessage());
+    exit("Invalid JWT: " . $e->getMessage());
 }
 
 // --- Connect to MySQL ---
@@ -89,7 +112,6 @@ $mysqli = new mysqli(
     requireEnv('OHRM_DB_PASS'),
     requireEnv('OHRM_DB_NAME')
 );
-
 if ($mysqli->connect_errno) {
     http_response_code(500);
     exit("MySQL connection failed: " . $mysqli->connect_error);
@@ -97,28 +119,21 @@ if ($mysqli->connect_errno) {
 
 // --- Lookup user ---
 $query = "
-    SELECT
-        e.emp_number, e.emp_work_email, e.emp_firstname, e.emp_lastname,
-        u.id, u.user_name, u.user_role_id
-    FROM
-        hs_hr_employee e
-    JOIN
-        ohrm_user u ON e.emp_number = u.emp_number
-    WHERE
-        e.emp_work_email = ?
+    SELECT e.emp_number, e.emp_work_email, e.emp_firstname, e.emp_lastname,
+           u.id, u.user_name, u.user_role_id
+    FROM hs_hr_employee e
+    JOIN ohrm_user u ON e.emp_number = u.emp_number
+    WHERE e.emp_work_email = ?
     LIMIT 1
 ";
-
 $stmt = $mysqli->prepare($query);
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $result = $stmt->get_result();
-
 if ($result->num_rows === 0) {
     http_response_code(403);
     exit("User not found");
 }
-
 $row = $result->fetch_assoc();
 $stmt->close();
 $mysqli->close();
@@ -128,19 +143,20 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-$_SESSION['loggedIn']   = true;
-$_SESSION['login']      = true;
-$_SESSION['username']   = $row['user_name'];
-$_SESSION['userRole']   = $row['user_role_id'];
-$_SESSION['id']         = $row['id'];
-$_SESSION['empNumber']  = $row['emp_number'];
-$_SESSION['email']      = $row['emp_work_email'];
-$_SESSION['fullName']   = $row['emp_firstname'] . ' ' . $row['emp_lastname'];
+// --- Store session info ---
+$_SESSION = array_merge($_SESSION, [
+    'loggedIn'   => true,
+    'login'      => true,
+    'username'   => $row['user_name'],
+    'userRole'   => $row['user_role_id'],
+    'id'         => $row['id'],
+    'empNumber'  => $row['emp_number'],
+    'email'      => $row['emp_work_email'],
+    'fullName'   => $row['emp_firstname'] . ' ' . $row['emp_lastname'],
+]);
 
-// --- Normalize role ---
-$role = strtolower($row['user_role_id'] ?? 'ess');
-
-switch ($role) {
+// --- Set role info ---
+switch (strtolower($row['user_role_id'] ?? 'ess')) {
     case '1':
         $_SESSION['userType'] = 'Admin';
         $_SESSION['isAdmin'] = true;
