@@ -112,7 +112,8 @@ pipeline {
                         string(credentialsId: 'orangehrm_sftp_port', variable: 'SFTP_PORT'),
                         string(credentialsId: 'orangehrm_sftp_host', variable: 'SFTP_HOST'),
                         string(credentialsId: calendarTokenId, variable: 'CALENDAR_ACCESS_TOKEN'),
-                        string(credentialsId: domainId, variable: 'CALENDAR_DOMAIN')
+                        string(credentialsId: domainId, variable: 'CALENDAR_DOMAIN'),
+                        string(credentialsId: 'CF_JWKS_URL', variable: 'JWKS_URL'),
                     ]
 
                     withCredentials(envCredentials) {
@@ -131,6 +132,7 @@ pipeline {
                         SFTP_HOST="${SFTP_HOST}"
                         CALENDAR_ACCESS_TOKEN="${CALENDAR_ACCESS_TOKEN}"
                         CALENDAR_DOMAIN="${CALENDAR_DOMAIN}"
+                        CF_JWKS_URL="${JWKS_URL}"
                         """.stripIndent()
                       
                         writeFile file: '.env.generated', text: envContent
@@ -139,22 +141,12 @@ pipeline {
                     withCredentials([
                         string(credentialsId: 'orangehrm-deploy-user', variable: 'DEPLOY_USER'),
                         string(credentialsId: 'orangehrm-deploy-host', variable: 'DEPLOY_HOST'),
-                        sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY'),
-                        file(credentialsId: 'cloudflare-public-key', variable: 'PEM_FILE')
+                        sshUserPrivateKey(credentialsId: 'orangehrm-ssh-key', keyFileVariable: 'SSH_KEY')
                     ]) {
                         sh """
                             echo "🚀 Deploying to $DEPLOY_USER@$DEPLOY_HOST:$deployPath"
 
                             ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $sharedPath $backupTargetDir"
-
-                            # Deploy .env and PEM
-                            scp -i $SSH_KEY -o StrictHostKeyChecking=no .env.generated $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/.env
-                            scp -i $SSH_KEY -o StrictHostKeyChecking=no $PEM_FILE $DEPLOY_USER@$DEPLOY_HOST:$sharedPath/cloudflare.pem
-
-                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST \\
-                            "chown $DEPLOY_USER:www-data $sharedPath/.env $sharedPath/cloudflare.pem && \\
-                            chmod 640 $sharedPath/.env $sharedPath/cloudflare.pem && \\
-                            chmod 755 $sharedPath"
 
                             # Deploy backup scripts to environment-specific path
                             scp -i $SSH_KEY -o StrictHostKeyChecking=no backup/orangehrm_backup.sh $DEPLOY_USER@$DEPLOY_HOST:$backupTargetDir/orangehrm_backup.sh
