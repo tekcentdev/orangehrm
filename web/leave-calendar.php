@@ -137,8 +137,10 @@ const calendar = new FullCalendar.Calendar(calendarEl, {
   eventDidMount: function(info) {
     const name = info.event.title;
     const type = info.event.extendedProps.leaveType || '';
+    const status = info.event.extendedProps.status || '';
     const normalized = normalizeLeaveType(type);
-    let tooltip = name + ' - ' + normalized;
+    const approvalStatus = status === 'CONFIRMED' ? 'Approved' : 'Pending';
+    let tooltip = name + ' - ' + normalized + ' (' + approvalStatus + ')';
     if (!info.event.allDay) {
       const opts = { hour: '2-digit', minute: '2-digit' };
       const startStr = info.event.start.toLocaleTimeString([], opts);
