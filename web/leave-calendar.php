@@ -69,6 +69,21 @@ $subscribeUrl = 'webcal://' . $host . '/web/leave-calendar-subscription.php?acce
       text-align: center;
     }
   }
+
+  /* Add breathing space around event content */
+  .fc-event {
+    padding: 2px 4px !important;
+  }
+  
+  .fc-event-main {
+    padding: 1px 2px !important;
+  }
+  
+  /* Ensure text has some space from the colored background */
+  .fc-event-title {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
 </style>
 </head>
 <body>
