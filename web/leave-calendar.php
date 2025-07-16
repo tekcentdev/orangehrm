@@ -39,7 +39,8 @@ $leaveTypeEmoji = [
     'Annual leave' => '🏖️',
     'Sick Leave' => '🤒',
     'Work from home' => '🏡',
-    'Travel' => '✈️'
+    'Travel' => '✈️',
+    'Birthday Leave' => '🎂'
 ];
 
 $subscribeUrl = 'webcal://' . $host . '/web/leave-calendar-subscription.php?access_token=' . urlencode($token);

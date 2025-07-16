@@ -143,7 +143,8 @@ $leaveTypeEmoji = [
     'Annual leave' => '🏖️',
     'Sick Leave' => '🤒',
     'Work from home' => '🏡',
-    'Travel' => '✈️'
+    'Travel' => '✈️',
+    'Birthday Leave' => '🎂'
 ];
 $unapprovedColor = '#bdc3c7';
 
