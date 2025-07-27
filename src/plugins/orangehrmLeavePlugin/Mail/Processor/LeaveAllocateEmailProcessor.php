@@ -27,6 +27,8 @@ use OrangeHRM\Leave\Event\LeaveAllocate;
 use OrangeHRM\Leave\Mail\Recipient;
 use OrangeHRM\Leave\Traits\Service\LeaveRequestServiceTrait;
 use OrangeHRM\Pim\Traits\Service\EmployeeServiceTrait;
+use OrangeHRM\Framework\Routing\UrlGenerator;
+use OrangeHRM\Framework\Services;
 
 class LeaveAllocateEmailProcessor extends AbstractLeaveEmailProcessor implements MailProcessor
 {
@@ -74,6 +76,14 @@ class LeaveAllocateEmailProcessor extends AbstractLeaveEmailProcessor implements
         $replacements['leaveDetails'] = $this->getLeaveDetailsByDetailedLeaves($detailedLeaves);
         $leaveRequestId = $event->getDetailedLeaveRequest()->getLeaveRequest()->getId();
         $replacements['leaveRequestComments'] = $this->getLeaveRequestComments($leaveRequestId);
+
+        /** @var UrlGenerator $urlGenerator */
+        $urlGenerator = $this->getContainer()->get(Services::URL_GENERATOR);
+        $replacements['leaveRequestLink'] = $urlGenerator->generate(
+            'leave_view_leave_request',
+            ['id' => $leaveRequestId],
+            UrlGenerator::ABSOLUTE_URL
+        );
 
         return $replacements;
     }
