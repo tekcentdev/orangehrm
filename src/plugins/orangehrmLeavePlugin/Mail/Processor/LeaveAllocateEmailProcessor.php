@@ -79,11 +79,24 @@ class LeaveAllocateEmailProcessor extends AbstractLeaveEmailProcessor implements
 
         /** @var UrlGenerator $urlGenerator */
         $urlGenerator = $this->getContainer()->get(Services::URL_GENERATOR);
-        $replacements['leaveRequestLink'] = $urlGenerator->generate(
+        $leaveRequestPath = $urlGenerator->generate(
             'leave_view_leave_request',
             ['id' => $leaveRequestId],
-            UrlGenerator::ABSOLUTE_URL
+            UrlGenerator::ABSOLUTE_PATH
         );
+
+        $envPath = dirname(__DIR__, 5) . '/shared/.env';
+        if (!file_exists($envPath)) {
+            $envPath = dirname(__DIR__, 5) . '/.env';
+        }
+        $env = [];
+        if (file_exists($envPath)) {
+            $env = parse_ini_file($envPath);
+        }
+        $calendarDomain = isset($env['CALENDAR_DOMAIN']) ? rtrim($env['CALENDAR_DOMAIN'], '/') : '';
+
+        $replacements['calendarDomain'] = $calendarDomain;
+        $replacements['leaveRequestPath'] = $leaveRequestPath;
 
         return $replacements;
     }
