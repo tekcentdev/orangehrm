@@ -17,7 +17,7 @@ pipeline {
             steps {
                 script {
                     def deployPath = ''
-                    if (env.BRANCH_NAME ==~ /^dev\/.*/ || env.BRANCH_NAME ==~ /^feature\/.*/ || env.BRANCH_NAME ==~ /^codex\/.*/) {
+                    if (env.BRANCH_NAME ==~ /^dev\/.*/ || env.BRANCH_NAME ==~ /^feature\/.*/ || env.BRANCH_NAME ==~ /.*codex.*/) {
                         deployPath = '/var/www/html/orangehrm/test'
                     } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME ==~ /^release\/.*/) {
                         deployPath = '/var/www/html/orangehrm/prod'
