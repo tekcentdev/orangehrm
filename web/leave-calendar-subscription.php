@@ -242,7 +242,7 @@ function eventsToIcs(array $events): string {
         $ics .= "BEGIN:VEVENT\r\n";
         $ics .= 'UID:' . $uid . "\r\n";
         $summary = $event['summary'] ?? $event['title'];
-        $ics .= 'SUMMARY:' . str_replace("\n", ' ', $summary) . "\r\n";
+        $ics .= 'SUMMARY:' . str_replace(["\n", "\t"], ' ', $summary) . "\r\n";
         $ics .= 'DTSTAMP:' . gmdate('Ymd\THis\Z') . "\r\n";
         if ($event['allDay']) {
             $ics .= 'DTSTART;VALUE=DATE:' . $event['start']->format('Ymd') . "\r\n";
