@@ -242,7 +242,20 @@ function eventsToIcs(array $events): string {
         $ics .= "BEGIN:VEVENT\r\n";
         $ics .= 'UID:' . $uid . "\r\n";
         $summary = $event['summary'] ?? $event['title'];
-        $ics .= 'SUMMARY:' . str_replace(["\n", "\t"], ' ', $summary) . "\r\n";
+        $summary = preg_replace('/\s+/', ' ', str_replace(["\n", "\t"], ' ', $summary));
+        // Escape special characters and ensure line folding for long summaries
+        $summary = str_replace(['\\', ';', ',', "\r", "\n"], ['\\\\', '\\;', '\\,', '', ''], $summary);
+        // Line fold if longer than 75 characters
+        if (strlen($summary) > 75) {
+            $ics .= 'SUMMARY:' . substr($summary, 0, 75) . "\r\n";
+            $remaining = substr($summary, 75);
+            while (strlen($remaining) > 0) {
+                $ics .= ' ' . substr($remaining, 0, 74) . "\r\n";
+                $remaining = substr($remaining, 74);
+            }
+        } else {
+            $ics .= 'SUMMARY:' . $summary . "\r\n";
+        }
         $ics .= 'DTSTAMP:' . gmdate('Ymd\THis\Z') . "\r\n";
         if ($event['allDay']) {
             $ics .= 'DTSTART;VALUE=DATE:' . $event['start']->format('Ymd') . "\r\n";
