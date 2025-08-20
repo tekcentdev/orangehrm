@@ -223,22 +223,6 @@ function eventsToIcs(array $events): string {
     $ics .= "PRODID:-//OrangeHRM//Leave Calendar//EN\r\n";
     $ics .= "CALSCALE:GREGORIAN\r\n";
     $ics .= "METHOD:PUBLISH\r\n";
-    // Simplified timezone definitions for better compatibility
-    $timezones = [
-        'Asia/Hong_Kong' => '+0800',
-        'Asia/Ho_Chi_Minh' => '+0700',
-        'Europe/London' => '+0000',
-    ];
-    foreach ($timezones as $tzId => $offset) {
-        $ics .= "BEGIN:VTIMEZONE\r\n";
-        $ics .= "TZID:" . $tzId . "\r\n";
-        $ics .= "BEGIN:STANDARD\r\n";
-        $ics .= "TZOFFSETFROM:" . $offset . "\r\n";
-        $ics .= "TZOFFSETTO:" . $offset . "\r\n";
-        $ics .= "DTSTART:19700101T000000\r\n";
-        $ics .= "END:STANDARD\r\n";
-        $ics .= "END:VTIMEZONE\r\n";
-    }
     foreach ($events as $idx => $event) {
         $uid = 'leave-' . ($event['id'] ?? $idx) . '@orangehrm';
         $ics .= "BEGIN:VEVENT\r\n";
@@ -258,25 +242,17 @@ function eventsToIcs(array $events): string {
         } else {
             $ics .= 'SUMMARY:' . $summary . "\r\n";
         }
-        // Add description for better compatibility
-        $description = 'Leave request for ' . $event['leaveType'];
-        $description = str_replace(['\\', ';', ',', "\r", "\n"], ['\\\\', '\\;', '\\,', '', ''], $description);
-        $ics .= 'DESCRIPTION:' . $description . "\r\n";
         $ics .= 'DTSTAMP:' . gmdate('Ymd\THis\Z') . "\r\n";
         if ($event['allDay']) {
             $ics .= 'DTSTART;VALUE=DATE:' . $event['start']->format('Ymd') . "\r\n";
             // For all-day events, DTEND should be the day AFTER the last day
             $ics .= 'DTEND;VALUE=DATE:' . $event['end']->format('Ymd') . "\r\n";
-            $ics .= 'X-MICROSOFT-CDO-ALLDAYEVENT:TRUE' . "\r\n";
         } else {
-            $tz = $event['timezone'] ?? 'Asia/Hong_Kong';
-            $ics .= 'DTSTART;TZID=' . $tz . ':' . $event['start']->format('Ymd\THis') . "\r\n";
-            $ics .= 'DTEND;TZID=' . $tz . ':' . $event['end']->format('Ymd\THis') . "\r\n";
+            // Convert to UTC for maximum compatibility
+            $ics .= 'DTSTART:' . $event['start']->setTimezone(new DateTimeZone('UTC'))->format('Ymd\THis\Z') . "\r\n";
+            $ics .= 'DTEND:' . $event['end']->setTimezone(new DateTimeZone('UTC'))->format('Ymd\THis\Z') . "\r\n";
         }
-        // Use valid ICS values - STATUS, CLASS, and TRANSP are optional in ICS, so we'll omit them for better compatibility
-        // $ics .= 'STATUS:' . $icsStatus . "\r\n";
-        // $ics .= "CLASS:PUBLIC\r\n";
-        // $ics .= "TRANSP:OPAQUE\r\n";
+        // All optional fields removed for maximum compatibility
         $ics .= "END:VEVENT\r\n";
     }
     $ics .= "END:VCALENDAR\r\n";
@@ -304,6 +280,4 @@ if ($format === 'json') {
 
 header('Content-Type: text/calendar; charset=utf-8');
 header('Content-Disposition: attachment; filename="leave-calendar.ics"');
-// Add BOM for better compatibility with some applications
-echo "\xEF\xBB\xBF";
 echo eventsToIcs($events);
