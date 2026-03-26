@@ -189,6 +189,18 @@ class MenuService
                 $selectedSidePanelMenuId = $detailedSidePanelMenuItem->getId();
             }
             $normalizedSidePanelMenuItems[] = $this->normalizeMenuItem($detailedSidePanelMenuItem, $baseUrl, $active);
+
+            // Insert custom Leave Calendar link after Leave
+            if ($detailedSidePanelMenuItem->getMenuTitle() === 'Leave') {
+                $leaveCalendar = new DetailedMenuItem();
+                $leaveCalendar->setId(9999);
+                $leaveCalendar->setMenuTitle('Leave Calendar');
+                $leaveCalendar->setAdditionalParams([
+                    'icon' => 'leave',
+                    'url' => '/web/leave-calendar.php',
+                ]);
+                $normalizedSidePanelMenuItems[] = $this->normalizeMenuItem($leaveCalendar, $baseUrl, false);
+            }
         }
 
         $normalizedTopMenuItems = [];

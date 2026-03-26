@@ -28,6 +28,8 @@ use OrangeHRM\Leave\Event\LeaveAllocate;
 use OrangeHRM\Leave\Mail\Recipient;
 use OrangeHRM\Leave\Traits\Service\LeaveRequestServiceTrait;
 use OrangeHRM\Pim\Traits\Service\EmployeeServiceTrait;
+use OrangeHRM\Framework\Routing\UrlGenerator;
+use OrangeHRM\Framework\Services;
 
 class LeaveAllocateEmailProcessor extends AbstractLeaveEmailProcessor implements MailProcessor
 {
@@ -75,6 +77,27 @@ class LeaveAllocateEmailProcessor extends AbstractLeaveEmailProcessor implements
         $replacements['leaveDetails'] = $this->getLeaveDetailsByDetailedLeaves($detailedLeaves);
         $leaveRequestId = $event->getDetailedLeaveRequest()->getLeaveRequest()->getId();
         $replacements['leaveRequestComments'] = $this->getLeaveRequestComments($leaveRequestId);
+
+        /** @var UrlGenerator $urlGenerator */
+        $urlGenerator = $this->getContainer()->get(Services::URL_GENERATOR);
+        $leaveRequestPath = $urlGenerator->generate(
+            'leave_view_leave_request',
+            ['id' => $leaveRequestId],
+            UrlGenerator::ABSOLUTE_PATH
+        );
+
+        $envPath = dirname(__DIR__, 5) . '/shared/.env';
+        if (!file_exists($envPath)) {
+            $envPath = dirname(__DIR__, 5) . '/.env';
+        }
+        $env = [];
+        if (file_exists($envPath)) {
+            $env = parse_ini_file($envPath);
+        }
+        $calendarDomain = isset($env['CALENDAR_DOMAIN']) ? rtrim($env['CALENDAR_DOMAIN'], '/') : '';
+
+        $replacements['calendarDomain'] = $calendarDomain;
+        $replacements['leaveRequestPath'] = $leaveRequestPath;
 
         return $replacements;
     }
