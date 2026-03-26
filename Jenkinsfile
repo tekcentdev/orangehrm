@@ -38,6 +38,7 @@ pipeline {
                         if [ -f composer.json ]; then
                             echo "Running composer install..."
                             composer install --no-interaction --prefer-dist
+                            composer update --no-interaction --prefer-dist
                         else
                             echo "❌ composer.json not found in src/"
                             exit 1
