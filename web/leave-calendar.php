@@ -7,7 +7,8 @@ if (isset($_GET['debug']) && $_GET['debug'] === 'true') {
     ini_set('display_errors', 'On');
 }
 
-function requireEnv(string $key): string {
+function requireEnv(string $key): string
+{
     if (!isset($_ENV[$key]) || $_ENV[$key] === '') {
         http_response_code(500);
         exit("Missing required environment variable: $key");
@@ -15,7 +16,8 @@ function requireEnv(string $key): string {
     return $_ENV[$key];
 }
 
-function normalizeLeaveType(string $type): string {
+function normalizeLeaveType(string $type): string
+{
     $lower = strtolower($type);
     if (strpos($lower, 'annual') !== false) {
         return 'Annual leave';

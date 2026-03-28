@@ -1,4 +1,5 @@
 <?php
+
 // Load environment variables from `shared/.env` or fallback to `.env`
 $_ENV = parse_ini_file(__DIR__ . '/../shared/.env')
     ?: parse_ini_file(__DIR__ . '/../.env')
@@ -13,7 +14,8 @@ require __DIR__ . '/../src/vendor/autoload.php';
 
 use OrangeHRM\Entity\Leave;
 
-function requireEnv(string $key): string {
+function requireEnv(string $key): string
+{
     if (!isset($_ENV[$key]) || $_ENV[$key] === '') {
         http_response_code(500);
         exit("Missing required environment variable: $key");
@@ -92,7 +94,8 @@ $rows = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 $mysqli->close();
 
-function locationToTimezone(?string $location): string {
+function locationToTimezone(?string $location): string
+{
     $map = [
         'Hong Kong' => 'Asia/Hong_Kong',
         'Hong Kong Office' => 'Asia/Hong_Kong',
@@ -105,7 +108,8 @@ function locationToTimezone(?string $location): string {
         : 'Asia/Hong_Kong';
 }
 
-function normalizeLeaveType(string $type): string {
+function normalizeLeaveType(string $type): string
+{
 
     $lower = strtolower($type);
     if (strpos($lower, 'annual') !== false) {
@@ -217,7 +221,8 @@ foreach ($rows as $row) {
     }
 }
 
-function eventsToIcs(array $events): string {
+function eventsToIcs(array $events): string
+{
     $ics = "BEGIN:VCALENDAR\r\n";
     $ics .= "VERSION:2.0\r\n";
     $ics .= "PRODID:-//OrangeHRM//Leave Calendar//EN\r\n";

@@ -1,11 +1,13 @@
 <?php
+
 // --- Load environment variables from ../shared/.env ---
 $envPath = __DIR__ . '/../shared/.env';
 if (file_exists($envPath)) {
     $_ENV = array_merge($_ENV, parse_ini_file($envPath, false, INI_SCANNER_TYPED));
 }
 
-function requireEnv(string $key): string {
+function requireEnv(string $key): string
+{
     if (!isset($_ENV[$key]) || $_ENV[$key] === '') {
         http_response_code(500);
         exit("Missing required environment variable: $key");
@@ -31,17 +33,19 @@ require __DIR__ . '/../src/vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use Firebase\JWT\ExpiredException;
 
 // --- JWT Validator using JWKS ---
-class JwtValidator {
+class JwtValidator
+{
     private string $jwksUrl;
 
-    public function __construct(string $jwksUrl) {
+    public function __construct(string $jwksUrl)
+    {
         $this->jwksUrl = $jwksUrl;
     }
 
-    public function getEmailFromJWT(string $jwt): string {
+    public function getEmailFromJWT(string $jwt): string
+    {
         $parts = explode('.', $jwt);
         if (count($parts) !== 3) {
             throw new Exception("Malformed JWT");
@@ -62,7 +66,8 @@ class JwtValidator {
         return $decoded->email;
     }
 
-    private function getCertByKid(string $kid): string {
+    private function getCertByKid(string $kid): string
+    {
         $json = file_get_contents($this->jwksUrl);
         if (!$json) {
             throw new Exception("Unable to fetch JWKS from Cloudflare");
