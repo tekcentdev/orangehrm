@@ -133,6 +133,12 @@ class MenuServiceTest extends KernelTestCase
                 'icon' => 'leave',
             ],
             [
+                'id' => 9999,
+                'name' => 'Leave Calendar',
+                'url' => '/web/leave-calendar.php',
+                'icon' => 'leave',
+            ],
+            [
                 'id' => 52,
                 'name' => 'Time',
                 'url' => '/time/viewTimeModule',
@@ -180,12 +186,6 @@ class MenuServiceTest extends KernelTestCase
                 'url' => '/claim/viewClaimModule',
                 'icon' => 'claim',
             ],
-            [
-                'id' => 101,
-                'name' => 'Buzz',
-                'url' => '/buzz/viewBuzz',
-                'icon' => 'buzz',
-            ]
         ], $sidePanelMenuItems);
         $this->assertEquals([
             [
@@ -410,6 +410,12 @@ class MenuServiceTest extends KernelTestCase
                 'icon' => 'leave',
             ],
             [
+                'id' => 9999,
+                'name' => 'Leave Calendar',
+                'url' => '/web/leave-calendar.php',
+                'icon' => 'leave',
+            ],
+            [
                 'id' => 52,
                 'name' => 'Time',
                 'url' => '/time/viewTimeModule',
@@ -445,12 +451,6 @@ class MenuServiceTest extends KernelTestCase
                 'url' => '/claim/viewClaimModule',
                 'icon' => 'claim'
             ],
-            [
-                'id' => 101,
-                'name' => 'Buzz',
-                'url' => '/buzz/viewBuzz',
-                'icon' => 'buzz',
-            ]
         ], $sidePanelMenuItems);
         $this->assertEquals([
             [
