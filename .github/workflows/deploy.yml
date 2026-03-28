@@ -1,4 +1,4 @@
-name: Deploy OrangeHRM
+name: Deploy
 
 on:
   push:
