@@ -7,6 +7,9 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+      - name: Enable Corepack
+        run: corepack enable
+        
       - uses: actions/checkout@v4
       - name: Install node dependencies
         run: cd src/client && yarn install

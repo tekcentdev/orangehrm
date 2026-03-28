@@ -58,6 +58,9 @@ jobs:
         run: |
           docker compose up -d php-8.0 mysql55
           docker ps
+          
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
