@@ -111,6 +111,7 @@ function normalizeLeaveType(type) {
   if (lower.includes('annual')) return 'Annual leave';
   if (lower.includes('sick')) return 'Sick Leave';
   if (lower.includes('work from home')) return 'Work from home';
+  if (lower.includes('wfh')) return 'Work from home';
   if (lower.includes('travel')) return 'Travel';
   return type;
 }
