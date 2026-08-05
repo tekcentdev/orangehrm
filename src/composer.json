@@ -33,7 +33,7 @@
         "symfony/cache": "~5.4.46",
         "symfony/mailer": "~5.4.45",
         "symfony/security-csrf": "~5.4.45",
-        "guzzlehttp/guzzle": "~7.8.1",
+        "guzzlehttp/guzzle": "~7.15.2",
         "symfony/translation": "~5.4.45",
         "symfony/polyfill-intl-messageformatter": "~1.29.0",
         "symfony/process": "~5.4.47",
